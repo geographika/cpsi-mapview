@@ -12,8 +12,12 @@ Ext.define('CpsiMapview.view.main.Map', {
         'CpsiMapview.view.toolbar.MapFooter',
         'CpsiMapview.view.toolbar.MapTools',
         'CpsiMapview.controller.MapController',
+        'BasiGX.util.Projection',
+        'BasiGX.util.Map'
+    ],
 
-        'BasiGX.util.Projection'
+    uses: [
+                'CpsiMapview.factory.Layer'
     ],
 
     layout: 'fit',
