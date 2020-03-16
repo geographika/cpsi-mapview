@@ -9,9 +9,15 @@ trigger:
 pool:
   vmImage: 'windows-2019'
 
+variables:
+    CN_SENCHA_EXT_VERSION: '6.2.0'
+    CN_SENCHA_EXT_VERSION: '6.5.3.6'
+
 steps:
 - script: echo Hello, world!
   displayName: 'Run a one-line script'
+- powershell: Invoke-WebRequest "http://cdn.sencha.com/ext/gpl/ext-$CN_SENCHA_EXT_VERSION-gpl.zip" -OutFile "ext-$CN_SENCHA_EXT_VERSION-gpl.zip"
+- powershell: Expand-Archive "ext-$CN_SENCHA_EXT_VERSION-gpl.zip" -DestinationPath . -Force
 
 - script: |
     echo Add other tasks to build, test, and deploy your project.
