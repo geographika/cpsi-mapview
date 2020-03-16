@@ -11,7 +11,7 @@ pool:
 
 variables:
     CN_SENCHA_EXT_VERSION: '6.2.0'
-    CN_SENCHA_EXT_VERSION: '6.5.3.6'
+    CN_SENCHA_CMD_VERSION: '6.5.3.6'
 
 steps:
 - script: echo Hello, world!
