@@ -18,13 +18,13 @@ steps:
   inputs:
     key: extjs
     restoreKeys: extjs
-    path: $(Pipeline.Workspace)/ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip
+    path: $(Pipeline.Workspace)/ext-$(CN_SENCHA_EXT_VERSION)-gpl.zip
     cacheHitVar: CACHE_RESTORED
 - powershell: Invoke-WebRequest "http://cdn.sencha.com/ext/gpl/ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip" -OutFile "ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip"
   condition: ne(variables.CACHE_RESTORED, 'true')
 - task: ExtractFiles@1
   inputs:
-    archiveFilePatterns: "$(Pipeline.Workspace)/ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip"
+    archiveFilePatterns: "$(Pipeline.Workspace)/ext-$(CN_SENCHA_EXT_VERSION)-gpl.zip"
     destinationFolder: .
 
 - script: |
