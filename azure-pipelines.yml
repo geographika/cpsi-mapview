@@ -14,10 +14,18 @@ variables:
     CN_SENCHA_CMD_VERSION: '6.5.3.6'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- task: Cache@2
+  inputs:
+    key: extjs | ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip
+    restoreKeys: extjs
+    path: $(Pipeline.Workspace)/ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip
+    cacheHitVar: CACHE_RESTORED
 - powershell: Invoke-WebRequest "http://cdn.sencha.com/ext/gpl/ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip" -OutFile "ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip"
-- powershell: Expand-Archive "ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip" -DestinationPath . -Force
+  condition: ne(variables.CACHE_RESTORED, 'true')
+- task: ExtractFiles@1
+  inputs:
+    archiveFilePatterns: 'ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip' 
+    destinationFolder: .
 
 - script: |
     echo Add other tasks to build, test, and deploy your project.
