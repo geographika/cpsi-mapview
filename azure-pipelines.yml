@@ -16,7 +16,7 @@ variables:
 steps:
 - task: CacheBeta@1
   inputs:
-    key: extjs | ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip
+    key: extjs
     restoreKeys: extjs
     path: $(Pipeline.Workspace)/ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip
     cacheHitVar: CACHE_RESTORED
