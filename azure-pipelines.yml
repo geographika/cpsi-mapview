@@ -24,7 +24,7 @@ steps:
   condition: ne(variables.CACHE_RESTORED, 'true')
 - task: ExtractFiles@1
   inputs:
-    archiveFilePatterns: 'ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip' 
+    archiveFilePatterns: "$(Pipeline.Workspace)/ext-$($env:CN_SENCHA_EXT_VERSION)-gpl.zip"
     destinationFolder: .
 
 - script: |
