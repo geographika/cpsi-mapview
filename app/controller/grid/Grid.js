@@ -236,6 +236,7 @@ Ext.define('CpsiMapview.controller.grid.Grid', {
         var me = this;
         var vm = me.getViewModel();
         var associatedEditWindow = vm.get('associatedEditWindow');
+        var associatedEditModelCfg = vm.get('associatedEditModelCfg') || {};
         var associatedEditModel = vm.get('associatedEditModel');
 
         // get a reference to the model class so we can use the
@@ -265,7 +266,7 @@ Ext.define('CpsiMapview.controller.grid.Grid', {
                 grid.mask('Loading Record...');
                 modelPrototype.load(recId, {
                     success: function (rec) {
-                        var win = Ext.create(associatedEditWindow);
+                        var win = Ext.create(associatedEditWindow, associatedEditModelCfg);
                         var vm = win.getViewModel();
                         vm.set('currentRecord', rec);
                         win.show();
