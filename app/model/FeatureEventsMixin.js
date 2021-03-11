@@ -49,6 +49,8 @@ Ext.define('CpsiMapview.model.FeatureEventsMixin', {
                 var layer = layers[0];
                 layerUtil.layerRefresh(layer);
             } else {
+                // the layer may not have been loaded due to zoom level
+                // for example a switch layer
                 Ext.Logger.warn('Layer ' + k + ' not found');
             }
 
