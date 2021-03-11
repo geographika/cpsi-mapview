@@ -45,10 +45,13 @@ Ext.define('CpsiMapview.model.FeatureEventsMixin', {
         // update associated layers
         Ext.each(me.syncLayerKeys, function (k) {
             var layers = BasiGX.util.Layer.getLayersBy('layerKey', k);
-            if (layers) {
+            if (layers.length > 0) {
                 var layer = layers[0];
                 layerUtil.layerRefresh(layer);
+            } else {
+                Ext.Logger.warn('Layer ' + k + ' not found');
             }
+
         });
 
         // update associated WFS stores (grid stores)
@@ -56,6 +59,8 @@ Ext.define('CpsiMapview.model.FeatureEventsMixin', {
             var store = Ext.data.StoreManager.lookup(k);
             if (store) {
                 store.reload();
+            } else {
+                Ext.Logger.warn('Store ' + k + ' not found');
             }
         });
 
