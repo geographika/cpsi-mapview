@@ -1,21 +1,16 @@
-describe('CpsiMapview.util.Grid', function() {
-    var cmp = CpsiMapview.util.Grid;
+describe('CpsiMapview.form.ControllerMixin', function () {
+    var mixin = Ext.create('CpsiMapview.form.ControllerMixin');
 
-    describe('Basics', function() {
-        it('is defined', function() {
-            expect(cmp).not.to.be(undefined);
+    describe('Basics', function () {
+        it('is defined', function () {
+            expect(mixin).not.to.be(undefined);
         });
     });
 
-    describe('Functions', function() {
+    describe('Functions', function () {
 
-        it('#getGridWindow', function() {
-            var fn = cmp.getGridWindow;
-            expect(fn).not.to.be(undefined);
-        });
-
-        it('#createGridWindow', function() {
-            var fn = cmp.createGridWindow;
+        it('#onFieldChanged', function () {
+            var fn = mixin.onFieldChanged;
             expect(fn).not.to.be(undefined);
         });
     });
