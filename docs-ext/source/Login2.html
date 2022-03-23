@@ -15,14 +15,19 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">Ext.define(&#39;CpsiMapview.controller.form.Login&#39;, {
+  <pre class="prettyprint lang-js"><span id='CpsiMapview-controller-form-Login'>/**
+</span> * The controller for the {@link CpsiMapview.view.form.Login}
+ *
+ * @class CpsiMapview.controller.form.Login
+ */
+Ext.define(&#39;CpsiMapview.controller.form.Login&#39;, {
     extend: &#39;Ext.app.ViewController&#39;,
     requires: [
         &#39;Ext.util.Cookies&#39;
     ],
     alias: &#39;controller.cmv_login_form&#39;,
 
-<span id='global-method-onSpecialKey'>    /**
+<span id='CpsiMapview-controller-form-Login-method-onSpecialKey'>    /**
 </span>    * Attempt to login if the user presses the Enter key on
     * the form
     */
@@ -32,8 +37,8 @@
         }
     },
 
-    onLoginClick: function (btn) {
-        var form = btn.up(&#39;form&#39;);
+<span id='CpsiMapview-controller-form-Login-method-onLoginClick'>    onLoginClick: function (btn) {
+</span>        var form = btn.up(&#39;form&#39;);
         var valid = true;
         Ext.each(form.down(&#39;textfield&#39;), function(field) {
             valid = valid &amp;&amp; !Ext.isEmpty(field.value);
@@ -43,7 +48,7 @@
         }
     },
 
-<span id='global-method-tryAutomaticLogin'>    /**
+<span id='CpsiMapview-controller-form-Login-method-tryAutomaticLogin'>    /**
 </span>    * If a user still has a valid token, don&#39;t force them to log
     * in again
     * @param {string} token The toggle state of the button
@@ -66,12 +71,16 @@
         }
     },
 
-    getTokenName: function () {
-
+<span id='CpsiMapview-controller-form-Login-method-getTokenName'>    getTokenName: function () {
+</span>
         var me = this;
         return me.getViewModel().tokenName;
     },
 
+<span id='CpsiMapview-controller-form-Login-method-login'>    /**
+</span>     * Set the login cookie and fire a global login event
+     * @param {any} response
+     */
     login: function (response) {
 
         var me = this;
@@ -85,9 +94,13 @@
 
         loginData[tokenName] = response.data;
         me.updateCookie(loginData);
-        me.fireEvent(&#39;login&#39;, loginData);
+        Ext.GlobalEvents.fireEvent(&#39;login&#39;, loginData);
+
     },
 
+<span id='CpsiMapview-controller-form-Login-method-logout'>    /**
+</span>     * Clear the login cookie and fire a global logout event
+     * */
     logout: function () {
 
         // issues with Cookies clear - http://www.sencha.com/forum/showthread.php?98070-CLOSED-Ext.util.Cookies.clear%28%29-not-working
@@ -105,11 +118,11 @@
         loginData[tokenName] = &#39;&#39;;
 
         me.updateCookie(loginData);
-        me.fireEvent(&#39;logout&#39;);
+        Ext.GlobalEvents.fireEvent(&#39;logout&#39;, loginData);
     },
 
-    updateCookie: function (loginData) {
-
+<span id='CpsiMapview-controller-form-Login-method-updateCookie'>    updateCookie: function (loginData) {
+</span>
         var me = this;
         var tokenName = me.getTokenName();
 
@@ -119,8 +132,8 @@
 
     },
 
-    callLoginService: function (jsonData, serviceUrl, showMask) {
-
+<span id='CpsiMapview-controller-form-Login-method-callLoginService'>    callLoginService: function (jsonData, serviceUrl, showMask) {
+</span>
         var me = this;
         var view = me.getView();
 
@@ -152,13 +165,23 @@
                 }
                 else {
                     //username / password login failure
-                    me.fireEvent(&#39;loginfail&#39;, result.statusText);
+                    Ext.toast({
+                        html: response.message,
+                        title: &#39;Login Failed&#39;,
+                        width: 200,
+                        align: &#39;br&#39;
+                    });
                     view.show();
                 }
             },
             failure: function (result) {
                 // indicates HTTP failure
-                me.fireEvent(&#39;loginfail&#39;, result.statusText);
+                Ext.toast({
+                    html: result.statusText,
+                    title: &#39;Login Failed&#39;,
+                    width: 200,
+                    align: &#39;br&#39;
+                });
                 if (showMask) {
                     view.unmask();
                 }
@@ -168,8 +191,8 @@
         });
     },
 
-    attemptLogin: function () {
-
+<span id='CpsiMapview-controller-form-Login-method-attemptLogin'>    attemptLogin: function () {
+</span>
         var me = this;
         var view = me.getView();
 
@@ -181,10 +204,6 @@
         var serviceUrl = me.getViewModel().serviceUrl;
         me.callLoginService(jsonData, serviceUrl, true);
 
-    },
-
-    initViewModel: function () {
-        this.tryAutomaticLogin();
     }
 
 });

@@ -22,6 +22,7 @@ Ext.define(&#39;CpsiMapview.view.toolbar.MapTools&#39;, {
     extend: &#39;Ext.toolbar.Toolbar&#39;,
     xtype: &#39;cmv_maptools&#39;,
     requires: [
+        &#39;Ext.container.ButtonGroup&#39;,
         &#39;GeoExt.form.field.GeocoderComboBox&#39;,
         &#39;BasiGX.view.button.Measure&#39;,
         &#39;BasiGX.view.button.ZoomIn&#39;,
@@ -31,7 +32,7 @@ Ext.define(&#39;CpsiMapview.view.toolbar.MapTools&#39;, {
         &#39;CpsiMapview.view.button.DigitizeButton&#39;,
         &#39;CpsiMapview.model.button.MeasureButton&#39;,
         &#39;CpsiMapview.controller.button.MeasureButtonController&#39;,
-        &#39;CpsiMapview.controller.MapController&#39;,
+        &#39;CpsiMapview.controller.toolbar.MapTools&#39;,
         &#39;CpsiMapview.view.combo.Gazetteer&#39;,
         &#39;CpsiMapview.view.button.StreetViewTool&#39;,
         &#39;CpsiMapview.view.panel.TimeSlider&#39;,
@@ -39,7 +40,7 @@ Ext.define(&#39;CpsiMapview.view.toolbar.MapTools&#39;, {
         &#39;CpsiMapview.view.lineSliceGridExample.LineSliceGridButton&#39;
     ],
 
-<span id='CpsiMapview-view-toolbar-MapTools-property-controller'>    controller: &#39;cmv_map&#39;,
+<span id='CpsiMapview-view-toolbar-MapTools-property-controller'>    controller: &#39;cmv_maptools&#39;,
 </span>
 <span id='CpsiMapview-view-toolbar-MapTools-property-dock'>    dock: &#39;top&#39;,
 </span>
@@ -54,6 +55,12 @@ Ext.define(&#39;CpsiMapview.view.toolbar.MapTools&#39;, {
                 {
                     xtype: &#39;basigx-button-zoomtoextent&#39;,
                     extent: [-1210762, 6688545, -600489, 7490828]
+                }, {
+                    xtype: &#39;button&#39;,
+                    toggleGroup: &#39;map&#39;,
+                    name: &#39;pan&#39;,
+                    tooltip: &#39;Pan the map&#39;,
+                    glyph: &#39;xf256@FontAwesome&#39;,
                 }, {
                     xtype: &#39;basigx-button-zoomin&#39;,
                     toggleGroup: &#39;map&#39;
@@ -158,34 +165,20 @@ Ext.define(&#39;CpsiMapview.view.toolbar.MapTools&#39;, {
                 startDate: new Date(1946, 0, 1),
                 endDate: new Date(2020, 11, 30)
             }]
-        }
-    ],
-
-<span id='CpsiMapview-view-toolbar-MapTools-method-initComponent'>    /**
-</span>     * @private
-     */
-    initComponent: function () {
-        var me = this;
-        var map = BasiGX.util.Map.getMapComponent().map;
-
-        // Nominatim based location search
-        me.items.push({
+        }, {
             xtype: &#39;buttongroup&#39;,
             title: &#39;Gazetteers&#39;,
             items: [{
-                xtype: &#39;gx_geocoder_combo&#39;,
-                map: map
+                xtype: &#39;gx_geocoder_combo&#39;
             }, {
                 xtype: &#39;cmv_gazetteer_combo&#39;, // custom CPSI gazetteer
                 url: &#39;https://pmstipperarydev.compass.ie/WebServices/townland/gazetteer/&#39;,
                 proxyRootProperty: &#39;data&#39;,
                 displayValueMapping: &#39;name&#39;,
-                emptyText: &#39;Townland...&#39;,
-                map: map
+                emptyText: &#39;Townland...&#39;
             }]
-        });
-        me.callParent();
-    }
+        }
+    ]
 });
 </pre>
 </body>

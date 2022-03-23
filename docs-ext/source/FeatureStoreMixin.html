@@ -25,6 +25,7 @@ Ext.define(&#39;CpsiMapview.model.FeatureStoreMixin&#39;, {
     extend: &#39;Ext.Mixin&#39;,
     requires: [
         &#39;GeoExt.data.store.Features&#39;,
+        &#39;GeoExt.data.model.Feature&#39;,
         &#39;BasiGX.util.Map&#39;
     ],
 <span id='CpsiMapview-model-FeatureStoreMixin-property-mixinConfig'>    mixinConfig: {
@@ -35,8 +36,9 @@ Ext.define(&#39;CpsiMapview.model.FeatureStoreMixin&#39;, {
         }
     },
 
-<span id='CpsiMapview-model-FeatureStoreMixin-property-extentBuffer'>    /**
+<span id='CpsiMapview-model-FeatureStoreMixin-cfg-extentBuffer'>    /**
 </span>     * The default buffer distance to use when zooming to points
+     * @cfg {Number}
      */
     extentBuffer: 100,
 
@@ -125,6 +127,8 @@ Ext.define(&#39;CpsiMapview.model.FeatureStoreMixin&#39;, {
                     me.set(field.name, null, { convert: false });
                 },
                 remove: function (store) {
+                    // if there are issues here with features being added and then removed
+                    // then make sure the model ids are unique!
                     me.updateAssociatedField(store, field);
                 }
             }
@@ -173,6 +177,7 @@ Ext.define(&#39;CpsiMapview.model.FeatureStoreMixin&#39;, {
 
         Ext.each(me.getFields(), function (f) {
             switch (true) {
+                case (f.type === &#39;feature&#39; || f.superclass.type == &#39;feature&#39;):
                 case (f.type === &#39;line&#39; || f.superclass.type == &#39;line&#39;):
                 case (f.type === &#39;polygon&#39; || f.superclass.type == &#39;polygon&#39;):
                 case (f.type === &#39;point&#39; || f.superclass.type == &#39;point&#39;):

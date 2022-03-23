@@ -25,9 +25,11 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
     extend: &#39;Ext.Mixin&#39;,
     mixins: {
         zoomer: &#39;CpsiMapview.util.ZoomerMixin&#39;,
-        validation: &#39;CpsiMapview.form.ValidationMessages&#39;
+        validation: &#39;CpsiMapview.form.ValidationMessagesMixin&#39;
     },
 
+<span id='CpsiMapview-form-ControllerMixin-property-toolListenerAdded'>    toolListenerAdded: false,
+</span>
 <span id='CpsiMapview-form-ControllerMixin-property-errorCodes'>    /** The possible return codes from the services */
 </span>    errorCodes: {
         None: 0,
@@ -77,6 +79,10 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
                     iconCls: Ext.MessageBox.ERROR
                 });
         }
+
+        // fire an event that saving the model failed
+        var view = me.getView();
+        view.fireEvent(&#39;savefailed&#39;);
     },
 
 <span id='CpsiMapview-form-ControllerMixin-method-onSaveSucceded'>    /**
@@ -115,16 +121,14 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
 
 <span id='CpsiMapview-form-ControllerMixin-method-onSaveClick'>    /**
 </span>     * Action when the save button is clicked
+     * Previously form.isValid() was checked in this function, but values on
+     * a tab that has not been displayed are only bound later, so this
+     * incorrectly returns that a form is invalid
      * */
     onSaveClick: function () {
         var me = this;
-        var win = me.getView();
-        var f = win.down(&#39;form&#39;);
-        if (!f) {
-            throw &#39;Editing windows must have a top level &quot;xtype: \&#39;form\&#39;&quot; container&#39;;
-        }
-
-        var goAhead = f.isValid() &amp;&amp; (!this.beforeSave || this.beforeSave());
+        var modelIsValid = me.getViewModel().get(&#39;currentRecord&#39;).isValid();
+        var goAhead = modelIsValid &amp;&amp; (!this.beforeSave || this.beforeSave());
 
         if (goAhead) {
             me.saveRecord();
@@ -179,9 +183,12 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
         record.onModelSaved();
         record.destroy();
 
+        // fire an event
+        var view = me.getView();
+        view.fireEvent(&#39;deletesucceeded&#39;);
+
         // close the window
-        var w = me.getView();
-        w.close();
+        view.close();
     },
 
 <span id='CpsiMapview-form-ControllerMixin-method-onDelete'>    /**
@@ -255,6 +262,14 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
         }
     },
 
+<span id='CpsiMapview-form-ControllerMixin-method-onCloseClick'>    /**
+</span>     * Action when the close button is clicked.
+     */
+    onCloseClick: function () {
+        var win = this.getView();
+        win.close();
+    },
+
 <span id='CpsiMapview-form-ControllerMixin-method-onExportClick'>    /**
 </span>     * Action when the export button is clicked
      * */
@@ -287,6 +302,9 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
         vm.set(&#39;currentRecord&#39;, serverRec);
         vm.notify(); // flush all bindings, otherwise the grid may still be bound to the old layer
 
+        // also reset the listener added flag as once reloaded the layers have a different source
+        me.toolListenerAdded = false;
+
         // we also need to update the featureStores for any associated tools
         // as when a model is reloaded then the featureStore and layer
         // are recreated, and the tool is pointing to the old layer
@@ -297,34 +315,33 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
         var polygonLayer = vm.get(&#39;polygonLayer&#39;);
         var vw = me.getView();
 
-        var tool, toolCtrl;
+        var toolCtrl;
 
-        if (vm.get(&#39;hideDigitisePointButton&#39;) === false) {
-            tool = vw.down(&#39;#pointDigitiserButton&#39;);
-            toolCtrl = tool.getController();
-            toolCtrl.setResultLayer(resultLayer);
-            toolCtrl.setDrawLayer(resultLayer);
-        }
+        // get all digitising tools that are part of the map toggleGroup and visible
+        var toolButtons = vw.query(&#39;button[toggleGroup=map][hidden=false]&#39;);
 
-        if (vm.get(&#39;hideDigitiseAreaButton&#39;) === false) {
-            tool = vw.down(&#39;#areaDigitiserButton&#39;);
-            toolCtrl = tool.getController();
-            toolCtrl.setResultLayer(resultLayer);
-            toolCtrl.setDrawLayer(polygonLayer);
-        }
+        // now ensure that the tool layers are updated to reflect the new layers/stores
+        Ext.each(toolButtons, function (toolBtn) {
+            toolCtrl = toolBtn.getController();
 
-        if (vm.get(&#39;circleDigitiserButton&#39;) === false) {
-            tool = vw.down(&#39;#circleDigitiserButton&#39;);
-            toolCtrl = tool.getController();
-            toolCtrl.setResultLayer(resultLayer);
-            toolCtrl.setDrawLayer(polygonLayer);
-        }
+            if (toolCtrl.setResultLayer) {
+                // ensure scope is set to the controller when calling the function
+                toolCtrl.setResultLayer(resultLayer);
+            }
 
-        if (vm.get(&#39;hideDigitiseSegmentButton&#39;) === false) {
-            tool = vw.down(&#39;#segmentDigitiserButton&#39;);
-            toolCtrl = tool.getController();
-            toolCtrl.setResultLayer(resultLayer);
-        }
+            // set the polygonLayer for polygon tools
+            if (toolBtn.type === &#39;Polygon&#39; || toolBtn.type === &#39;Circle&#39;) {
+                //&lt;debug&gt;
+                Ext.Assert.truthy(polygonLayer);
+                //&lt;/debug&gt;
+                toolCtrl.setDrawLayer(polygonLayer);
+            } else {
+                // the resultLayer and drawLayer are the same layer for the local editing tools
+                if (Ext.Array.contains([&#39;lineDigitiserButton&#39;, &#39;pointDigitiserButton&#39;], toolBtn.getItemId())) {
+                    toolCtrl.setDrawLayer(resultLayer);
+                }
+            }
+        });
 
         // only destroy this after the new record has been set as getting errors in checkHadValue &gt; getChildValue
         // it seems to be an issue with checkBoxes only
@@ -352,7 +369,12 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
         var modelPrototype = Ext.ClassManager.get(currentRecord.$className);
 
         modelPrototype.load(currentRecord.getId(), {
-            success: me.reloadRecord,
+            success: function (serverRec) {
+                me.reloadRecord(serverRec);
+                // fire the refreshsucceeded event outside of reloadRecord function to avoid two calls
+                // as reloadRecord is also called in onSaveSucceded
+                win.fireEvent(&#39;refreshsucceeded&#39;);
+            },
             callback: function () {
                 win.unmask();
             },
@@ -394,7 +416,45 @@ Ext.define(&#39;CpsiMapview.form.ControllerMixin&#39;, {
             // so any validation logic can be retriggered if required
             vm.set(&#39;timestamp&#39;, Ext.Date.now());
         }
+    },
+
+<span id='CpsiMapview-form-ControllerMixin-method-onEdgesModified'>    /**
+</span>     * Several forms can have both a line and polygon editing tools
+     * When a user switches from the polygon tool to the line tool
+     * the polygon should be removed so it is not sent to the server
+     */
+    onEdgesModified: function (evt) {
+
+        var me = this;
+        var vm = me.getViewModel();
+        var modifications = evt.modifications;
+
+        if ((modifications.newEdgeCount &gt; 0) &amp;&amp; (modifications.toolType !== &#39;Polygon&#39; &amp;&amp;
+            modifications.toolType !== &#39;Circle&#39;)) {
+            var polygonLayer = vm.get(&#39;polygonLayer&#39;);
+            if (polygonLayer) {
+                polygonLayer.getSource().clear();
+            }
+        }
+    },
+
+<span id='CpsiMapview-form-ControllerMixin-method-onDigitizingToolToggle'>    /**
+</span>     * Whenever one of the digitizing buttons is activated
+     * add a listener to check for modifications to edges
+     * We can only add this listener when the tools are activated or the resultLayer
+     * won&#39;t have been created
+     */
+    onDigitizingToolToggle: function () {
+        var me = this;
+        var vm = me.getViewModel();
+        var resultLayer = vm.get(&#39;resultLayer&#39;);
+
+        if (resultLayer &amp;&amp; (me.toolListenerAdded === false)) {
+            resultLayer.getSource().on(&#39;featuresupdated&#39;, me.onEdgesModified.bind(me));
+            me.toolListenerAdded = true;
+        }
     }
-});</pre>
+});
+</pre>
 </body>
 </html>

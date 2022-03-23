@@ -29,6 +29,7 @@ Ext.define(&#39;CpsiMapview.view.LayerTree&#39;, {
         &#39;CpsiMapview.view.menuitem.LayerLabels&#39;,
         &#39;CpsiMapview.view.menuitem.LayerOpacity&#39;,
         &#39;CpsiMapview.view.menuitem.LayerGrid&#39;,
+        &#39;CpsiMapview.view.menuitem.LayerHelp&#39;,
         &#39;CpsiMapview.view.menuitem.LayerStyleSwitcher&#39;,
         &#39;CpsiMapview.view.menuitem.LayerMetadata&#39;,
         &#39;CpsiMapview.view.menuitem.LayerFilterReset&#39;,
@@ -104,7 +105,8 @@ Ext.define(&#39;CpsiMapview.view.LayerTree&#39;, {
                         &#39;cmv_menuitem_layeropacity&#39;,
                         &#39;cmv_menuitem_layergrid&#39;,
                         &#39;cmv_menuitem_layermetadata&#39;,
-                        &#39;cmv_menuitem_layerfilterreset&#39;
+                        &#39;cmv_menuitem_layerfilterreset&#39;,
+                        &#39;cmv_menuitem_layerhelp&#39;
                     ]
                 }, {
                     ptype: &#39;cmv_tree_inresolutionrange&#39;
@@ -122,7 +124,7 @@ Ext.define(&#39;CpsiMapview.view.LayerTree&#39;, {
         // decide where to render style switcher radio groups
         if (me.styleSwitcherBelowNode) {
             // add plugin to render style switcher permanently below tree nodes
-            me.columns.items[0].plugins.push({ptype: &#39;cmv_tree_column_style_switcher&#39;});
+            me.columns.items[0].plugins.push({ ptype: &#39;cmv_tree_column_style_switcher&#39; });
         } else {
             // add context menu item showing the style switcher
             Ext.each(me.columns.items[0].plugins, function (plugin) {
@@ -156,18 +158,18 @@ Ext.define(&#39;CpsiMapview.view.LayerTree&#39;, {
     },
 
 <span id='CpsiMapview-view-LayerTree-method-getNodeForLayer'>    /**
-</span>     * Gets the layer node UI for the given layer.
+</span>     * Gets the layer node UI for the given layer. Any group layers are ignored
+     * to avoid cases where a child node has the same name as the group layer name
      *
      * @param  {ol.layer.Base} layer The layer to update in the tree
      */
     getNodeForLayer: function (layer) {
         var me = this;
         var treeStore = me.getView().getStore();
-
         var foundNode = undefined;
 
         treeStore.each(function (node) {
-            if (node.getOlLayer() &amp;&amp; node.getOlLayer().get(&#39;name&#39;) === layer.get(&#39;name&#39;)) {
+            if (node.getOlLayer() &amp;&amp; node.getOlLayer().get(&#39;layerKey&#39;) === layer.get(&#39;layerKey&#39;)) {
                 foundNode = node;
                 return false;
             }

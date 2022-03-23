@@ -30,17 +30,17 @@ Ext.define(&#39;CpsiMapview.form.ViewModelMixin&#39;, {
 
 <span id='CpsiMapview-form-ViewModelMixin-property-mixinConfig'>    mixinConfig: {
 </span>        before: {
-            destroy: &#39;destroyUtil&#39;
+            destroy: &#39;destroyCurrentRecord&#39;
         },
         after: {
             initConfig: &#39;onInitConfig&#39;
         }
     },
 
-<span id='CpsiMapview-form-ViewModelMixin-method-destroyUtil'>    /**
+<span id='CpsiMapview-form-ViewModelMixin-method-destroyCurrentRecord'>    /**
 </span>     * Destroy the currently associated record
      * */
-    destroyUtil: function () {
+    destroyCurrentRecord: function () {
         var me = this;
         var rec = me.get(&#39;currentRecord&#39;);
         rec.destroy();
@@ -71,7 +71,13 @@ Ext.define(&#39;CpsiMapview.form.ViewModelMixin&#39;, {
 <span id='CpsiMapview-form-ViewModelMixin-cfg-formulas'>        formulas: {
 </span>
             map: function () {
-                return BasiGX.util.Map.getMapComponent().getMap();
+                var cmp = BasiGX.util.Map.getMapComponent();
+                if (cmp) {
+                    return cmp.getMap();
+                }
+                else {
+                    return null;
+                }
             },
 
             resultLayer: {
@@ -115,15 +121,25 @@ Ext.define(&#39;CpsiMapview.form.ViewModelMixin&#39;, {
                 }
             },
 
+<span id='CpsiMapview-form-ViewModelMixin-method-valid'>            /**
+</span>            * This is overwritten in most of the ViewModels that use this mixin
+            */
+            valid: function () {
+                return true;
+            },
+
             canSave: {
                 bind: {
                     currentRecord: &#39;{currentRecord}&#39;,
+                    isLocked: &#39;{currentRecord.isLocked}&#39;,
                     isValid: &#39;{valid}&#39;
                 },
                 get: function (data) {
                     var ret = data.isValid;
                     ret = ret &amp;&amp; (data.isLocked !== true);
-                    ret = ret &amp;&amp; this.getFormulas().belongsToRoleReadWrite.call(this, this.getFormulaFn);
+                    if (this.getFormulas().belongsToRoleReadWrite) {
+                        ret = ret &amp;&amp; this.getFormulas().belongsToRoleReadWrite.call(this, this.getFormulaFn);
+                    }
                     return ret;
                 }
             },
@@ -135,7 +151,9 @@ Ext.define(&#39;CpsiMapview.form.ViewModelMixin&#39;, {
                 },
                 get: function (data) {
                     var ret = (data.isLocked !== true) &amp;&amp; !data.phantom;
-                    ret = ret &amp;&amp; this.getFormulas().belongsToRoleReadWrite.call(this, this.getFormulaFn);
+                    if (this.getFormulas().belongsToRoleReadWrite) {
+                        ret = ret &amp;&amp; this.getFormulas().belongsToRoleReadWrite.call(this, this.getFormulaFn);
+                    }
                     return ret;
                 }
             },
@@ -146,6 +164,22 @@ Ext.define(&#39;CpsiMapview.form.ViewModelMixin&#39;, {
                     phantom: &#39;{currentRecord.phantom}&#39;
                 },
                 get: function (data) {
+                    if (!data.currentRecord || !data.currentRecord.isPhantom) {
+                        return false;
+                    }
+                    return !data.currentRecord.isPhantom();
+                }
+            },
+
+            canExport: {
+                bind: {
+                    currentRecord: &#39;{currentRecord}&#39;,
+                    phantom: &#39;{currentRecord.phantom}&#39;
+                },
+                get: function (data) {
+                    if (!data.currentRecord || !data.currentRecord.isPhantom) {
+                        return false;
+                    }
                     return !data.currentRecord.isPhantom();
                 }
             }

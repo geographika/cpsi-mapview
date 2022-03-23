@@ -267,6 +267,15 @@ Ext.define(&#39;CpsiMapview.controller.button.DigitizeButtonController&#39;, {
 
             me.pointerInteraction = new ol.interaction.Pointer({
                 handleEvent: function (evt) {
+
+                    // fire an event to handle drag event ends for local drawing
+                    if (evt.type === &#39;pointerup&#39;) {
+                        if (!view.getApiUrl()) {
+                            var drawSource = me.drawLayer.getSource();
+                            drawSource.dispatchEvent({ type: &#39;localdrawend&#39; });
+                        }
+                    }
+
                     if (deleteCondition(evt)) {
                         return me.handlePointDelete(evt);
                     }
@@ -552,6 +561,8 @@ Ext.define(&#39;CpsiMapview.controller.button.DigitizeButtonController&#39;, {
         var drawSource = me.drawLayer.getSource();
         // clear all previous features so only the last drawn feature remains
         drawSource.clear();
+        // fire an event when the drawing is complete
+        drawSource.dispatchEvent({ type: &#39;localdrawend&#39; });
     },
 
 <span id='CpsiMapview-controller-button-DigitizeButtonController-method-handleDrawEnd'>    /**
@@ -878,8 +889,13 @@ Ext.define(&#39;CpsiMapview.controller.button.DigitizeButtonController&#39;, {
                         return format.readFeature(feat);
                     });
                 } else {
-                    BasiGX.error(&#39;Could not find features in the response: &#39; +
-                        (json.message ? json.message : JSON.stringify(json)));
+                    Ext.toast({
+                        html: &#39;No features found at this location&#39; +
+                            (json.message ? &#39; (&#39; + json.message + &#39;)&#39; : &#39;&#39;),
+                        title: &#39;No Features&#39;,
+                        width: 200,
+                        align: &#39;br&#39;
+                    });
                 }
             } else {
                 BasiGX.error(&#39;Response was empty&#39;);
@@ -1000,10 +1016,15 @@ Ext.define(&#39;CpsiMapview.controller.button.DigitizeButtonController&#39;, {
             // remove all features from the current active group
             var allFeatures = me.resultLayer.getSource().getFeatures().slice(0);
             Ext.each(allFeatures, function (f) {
-                if (f.get(&#39;group&#39;) === me.activeGroupIdx) {
+                if (f.get(&#39;group&#39;) === me.activeGroupIdx || !f.get(&#39;group&#39;)) {
+                    if (!f.get(&#39;group&#39;)) {
+                        // the property must be updated before removing the feature, or it is readded to the store
+                        f.set(&#39;group&#39;, me.activeGroupIdx);
+                    }
                     resultSource.removeFeature(f);
                 }
             });
+
             // add the new features for the current active group
             resultSource.addFeatures(features);
 
@@ -1015,11 +1036,17 @@ Ext.define(&#39;CpsiMapview.controller.button.DigitizeButtonController&#39;, {
                 newLength += f.get(&#39;length&#39;) ? f.get(&#39;length&#39;) : 0;
             });
 
+            var newEdgeCount = features.filter(function (feature) {
+                return feature.getGeometry() instanceof ol.geom.LineString;
+            }).length;
+
             var modifications = {
                 originalLength: originalLength,
                 newLength: newLength,
+                newEdgeCount: newEdgeCount,
                 originalSolverPoints: originalSolverPoints,
-                newSolverPoints: newSolverPoints
+                newSolverPoints: newSolverPoints,
+                toolType: me.getView().type
             };
 
             // fire a custom event from the source so a listener can be added once
@@ -1045,6 +1072,11 @@ Ext.define(&#39;CpsiMapview.controller.button.DigitizeButtonController&#39;, {
 
         // detoggle button
         me.onToggle(btn, false);
+
+        // fire the button&#39;s toggle event so that the defaultClickEnabled property
+        // is updated in CpsiMapview.util.ApplicationMixin to re-enable clicks
+        btn.pressed = false;
+        btn.fireEvent(&#39;toggle&#39;);
 
         if (me.drawInteraction) {
             me.map.removeInteraction(me.drawInteraction);
@@ -1216,7 +1248,11 @@ Ext.define(&#39;CpsiMapview.controller.button.DigitizeButtonController&#39;, {
         };
 
         resultSource.dispatchEvent({ type: &#39;featuresupdated&#39;, modifications: modifications });
-        this.updateDrawSource();
+        me.updateDrawSource();
+
+        // also fire a view event
+        me.getView().fireEvent(&#39;responseFeatures&#39;, []);
+
     },
 
 <span id='CpsiMapview-controller-button-DigitizeButtonController-method-init'>    init: function () {

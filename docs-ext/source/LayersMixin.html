@@ -25,8 +25,8 @@ Ext.define(&#39;CpsiMapview.form.LayersMixin&#39;, {
 
     requires: [&#39;BasiGX.util.Map&#39;],
 
-<span id='CpsiMapview-form-LayersMixin-property-syncLayerWindowVisibility'>    // hide/show the form layer with the form
-</span>    syncLayerWindowVisibility: false,
+<span id='CpsiMapview-form-LayersMixin-property-hideLayerWhenMinimized'>    // hide/show the form layer with the form
+</span>    hideLayerWhenMinimized: false,
 
 <span id='CpsiMapview-form-LayersMixin-property-mixinConfig'>    // see https://docs.sencha.com/extjs/6.7.0/classic/Ext.Mixin.html
 </span>
@@ -37,12 +37,18 @@ Ext.define(&#39;CpsiMapview.form.LayersMixin&#39;, {
             // function with a different name or it is ignored
             // (as the mixin takes lower priority)
             onShow: &#39;onWindowShow&#39;,
-            hide: &#39;onHide&#39;
+            onHide: &#39;onWindowHide&#39;,
+            onMinimize: &#39;onWindowMinimize&#39;
         }
     },
 
-<span id='CpsiMapview-form-LayersMixin-method-toggleLayerVisibility'>    toggleLayerVisibility: function (show) {
-</span>
+<span id='CpsiMapview-form-LayersMixin-method-toggleLayerVisibility'>    /**
+</span>     * Changes the visibility of any of the layers associated
+     * with the form (layers are defined in the viewmodel)
+     * @param {boolean} show
+     */
+    toggleLayerVisibility: function (show) {
+
         var vm = this.getView().getViewModel();
 
         var layer = vm.get(&#39;resultLayer&#39;);
@@ -60,16 +66,34 @@ Ext.define(&#39;CpsiMapview.form.LayersMixin&#39;, {
         }
     },
 
-<span id='CpsiMapview-form-LayersMixin-method-onHide'>    onHide: function () {
-</span>        if (this.syncLayerWindowVisibility) {
-            this.toggleLayerVisibility(false);
+<span id='CpsiMapview-form-LayersMixin-method-onWindowHide'>    /**
+</span>     * Hides the layers associated with the form when the
+     * form is hidden
+     */
+    onWindowHide: function () {
+        var me = this;
+        var win = me.getView();
+
+        if (win.isMinimized === false) {
+            me.toggleLayerVisibility(false);
         }
     },
 
-<span id='CpsiMapview-form-LayersMixin-method-onWindowShow'>    onWindowShow: function () {
-</span>        if (this.syncLayerWindowVisibility) {
-            this.toggleLayerVisibility(true);
+<span id='CpsiMapview-form-LayersMixin-method-onWindowMinimize'>    /**
+</span>     * Hides the layers associated with the form when the
+     * form is minimized
+     */
+    onWindowMinimize: function () {
+        if (this.hideLayerWhenMinimized) {
+            this.toggleLayerVisibility(false);
         }
+    },
+<span id='CpsiMapview-form-LayersMixin-method-onWindowShow'>    /**
+</span>     * Show the layers associated with the form when the
+     * form is shown
+     */
+    onWindowShow: function () {
+        this.toggleLayerVisibility(true);
     }
 });</pre>
 </body>
