@@ -178,39 +178,41 @@ Ext.define('CpsiMapview.factory.Layer', {
             layerConf.switchResolution = switchResolution;
         }
 
-        // create layer depending on the resolution
-        var mapPanel = CpsiMapview.view.main.Map.guess();
-        var resolution = mapPanel.olMap.getView().getResolution();
-
-        var resultLayer;
-        var olVisibility = { openLayers: { visibility: layerConf.visibility } };
         var switchLayerUtil = CpsiMapview.util.SwitchLayer;
 
+        // create layer depending on the resolution
+
+        var resolution = switchLayerUtil.getResolution();
+        var olVisibility = { openLayers: { visibility: layerConf.visibility } };
+
+        var confBelowSwitchResolution = layerConf.layers[1];
+        var confAboveSwitchResolution = layerConf.layers[0];
+
+        // apply overall visibility to sub layer
         if (resolution < layerConf.switchResolution) {
-            var confBelowSwitchResolution = layerConf.layers[1];
-            // apply overall visibility to sub layer
             Ext.Object.merge(confBelowSwitchResolution, olVisibility);
-            resultLayer = LayerFactory.createLayer(confBelowSwitchResolution);
-            resultLayer.set(
-                'currentSwitchType',
-                switchLayerUtil.switchStates.BELOW_SWITCH_RESOLUTION
-            );
         } else {
-            var confAboveSwitchResolution = layerConf.layers[0];
             // apply overall visibility to sub layer
             Ext.Object.merge(confAboveSwitchResolution, olVisibility);
-            resultLayer = LayerFactory.createLayer(confAboveSwitchResolution);
-            resultLayer.set(
-                'currentSwitchType',
-                switchLayerUtil.switchStates.ABOVE_SWITCH_RESOLUTION
-            );
         }
 
-        // store the whole layer configuration
-        resultLayer.set('switchConfiguration', layerConf);
+        // create both layers at startup
+        var belowSwitchLayer = LayerFactory.createLayer(confBelowSwitchResolution);
+        var aboveSwitchLayer = LayerFactory.createLayer(confAboveSwitchResolution);
 
-        // for later identification
-        resultLayer.set('isSwitchLayer', true);
+        // store references to the layers in the config object
+        confBelowSwitchResolution.layer = belowSwitchLayer;
+        confAboveSwitchResolution.layer = aboveSwitchLayer;
+
+        // return the active switch layer, but add the other to the map so it is available
+        var resultLayer;
+        if (resolution < layerConf.switchResolution) {
+            resultLayer = belowSwitchLayer;
+        } else {
+            resultLayer = aboveSwitchLayer;
+        }
+
+        switchLayerUtil.updateActiveSwitchLayer(resultLayer, layerConf);
 
         return resultLayer;
     },
@@ -947,7 +949,7 @@ Ext.define('CpsiMapview.factory.Layer', {
             method: 'GET',
             success: function (response) {
                 var sldXml = response.responseText;
-                var sldParser = new GeoStylerSLDParser.SldStyleParser({ sldVersion: '1.1.0'});
+                var sldParser = new GeoStylerSLDParser.SldStyleParser({ sldVersion: '1.1.0' });
                 var olParser = new GeoStylerOpenlayersParser.OlStyleParser(ol);
 
                 sldParser.readStyle(sldXml)
