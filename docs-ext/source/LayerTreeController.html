@@ -29,7 +29,8 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
         &#39;BasiGX.util.Map&#39;,
         &#39;BasiGX.util.Layer&#39;,
         &#39;CpsiMapview.data.model.LayerTreeNode&#39;,
-        &#39;CpsiMapview.view.main.Map&#39;
+        &#39;CpsiMapview.view.main.Map&#39;,
+        &#39;CpsiMapview.util.Layer&#39;
     ],
 
     statics: {
@@ -108,6 +109,14 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
             me.initLayersAdded = true;
             me.autoConnectToMap(); // connect after all the layers have been loaded to the map
         });
+
+        Ext.GlobalEvents.on(&#39;login&#39;, function () {
+            me.filterLayersByRole();
+        });
+
+        Ext.GlobalEvents.on(&#39;logout&#39;, function () {
+            me.filterLayersByRole();
+        });
     },
 
 <span id='CpsiMapview-controller-LayerTreeController-method-autoConnectToMap'>    /**
@@ -122,20 +131,17 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
         me.map = mapComp &amp;&amp; mapComp.getMap();
 
         if (me.map) {
-            var store = me.makeLayerStore();
-            me.getView().setStore(store);
+            me.makeLayerStore();
         }
     },
 
 <span id='CpsiMapview-controller-LayerTreeController-method-makeLayerStore'>    /**
-</span>     * This method will return an instance of the GeoExt class
-     * `GeoExt.data.store.LayersTree` based on the connected OL #map. The layers
+</span>     * This method assigns an instance of the GeoExt class
+     * `GeoExt.data.store.LayersTree` based on the connected OL #map to the view. The layers
      * of the `ol.Map` are restructured and divided into groups based on the
      * JSON tree structure loaded in #loadTreeStructure. This assures that
      * the layers will appear in different folders in this TreePanel
      * (as defined in the tree structure JSON).
-     *
-     * @return {GeoExt.data.store.LayersTree} The created store.
      */
     makeLayerStore: function () {
         var me = this;
@@ -154,7 +160,10 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
             // create a new LayerStore from the grouped layers
             var groupedLayerTreeStore = Ext.create(&#39;GeoExt.data.store.LayersTree&#39;, {
                 model: &#39;CpsiMapview.data.model.LayerTreeNode&#39;,
-                layerGroup: rootLayerGroup
+                layerGroup: rootLayerGroup,
+                // filters are applied from bottom to top
+                // necessary for filtering empty layer groups
+                filterer: &#39;bottomup&#39;
             });
             me.getView().setStore(groupedLayerTreeStore);
 
@@ -171,6 +180,17 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
                 if (node.getOlLayer()) {
                     var origTreeNodeConf = node.getOlLayer().get(&#39;_origTreeConf&#39;) || {};
                     me.applyTreeConfigsToNode(node, origTreeNodeConf);
+
+                    // We are creating the gridWindow here already, to ensure that
+                    // any preset filter will be applied directly, without having to
+                    // open the gridWindow first.
+                    var gridWindow = CpsiMapview.util.Grid.getGridWindow(node.getOlLayer());
+                    if (gridWindow) {
+                        var grid = gridWindow.down(&#39;grid&#39;);
+                        if (grid) {
+                            grid.fireEvent(&#39;applypresetfilters&#39;);
+                        }
+                    }
                 }
             });
 
@@ -204,18 +224,42 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
      * @return {Ext.Promise} Promise resolving once the JSON is loaded
      */
     loadTreeStructure: function () {
-        return new Ext.Promise(function (resolve, reject) {
-            Ext.Ajax.request({
-                url: &#39;resources/data/layers/tree.json&#39;,
-                method: &#39;GET&#39;,
-                success: function (response) {
-                    var respJson = Ext.decode(response.responseText);
-                    resolve(respJson);
-                },
-                failure: function (response) {
-                    reject(response.status);
-                }
+        var app = Ext.getApplication ? Ext.getApplication() : Ext.app.Application.instance;
+        return app.getResourcePaths().then(function (resourcePaths) {
+            return new Ext.Promise(function (resolve, reject) {
+                Ext.Ajax.request({
+                    url: resourcePaths.treeConfig,
+                    method: &#39;GET&#39;,
+                    success: function (response) {
+                        var respJson = Ext.decode(response.responseText);
+                        resolve(respJson);
+                    },
+                    failure: function (response) {
+                        reject(response.status);
+                    }
+                });
             });
+        });
+    },
+
+
+<span id='CpsiMapview-controller-LayerTreeController-method-filterLayersByRole'>    /**
+</span>     * Ensures tree and map only contain layers for which
+     * the user has the required roles to see.
+     */
+    filterLayersByRole: function () {
+        var me = this;
+        var store = me.getView().getStore();
+        if (!store){
+            return;
+        }
+        store.filterBy(function(record){
+            var requiredRoles = record.get(&#39;requiredRoles&#39;);
+            if (requiredRoles &amp;&amp; Ext.isArray(requiredRoles) &amp;&amp; requiredRoles.length){
+                var showNode = CpsiMapview.util.RoleManager.hasAtLeastOneRequiredRole(requiredRoles);
+                return showNode;
+            }
+            return true;
         });
     },
 
@@ -349,6 +393,7 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
         node.set(&#39;qshowDelay&#39;, treeNodeConf.qshowDelay);
 
         node.set(&#39;text&#39;, treeNodeConf.text);
+        node.set(&#39;requiredRoles&#39;, treeNodeConf.requiredRoles);
 
         // expand configured folders in this tree
         node.set(&#39;expanded&#39;, treeNodeConf.expanded);
@@ -407,6 +452,28 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
         }
     },
 
+<span id='CpsiMapview-controller-LayerTreeController-method-onAddArcGISRestToggle'>    /**
+</span>     * This reacts on toggling the add arcgisrest Button in the layertree. It shows a window with an AddArcGISRestForm.
+     * @param {Ext.button.Button} button
+     * @param {boolean} pressed
+     */
+    onAddArcGISRestToggle: function (button, pressed) {
+        var me = this;
+
+        if (pressed) {
+            if (!this.addArcGISRestWindow) {
+                this.addArcGISRestWindow = Ext.create(me.getView().addArcGISRestWindowConfig);
+                this.addArcGISRestWindow.on(&#39;close&#39;, function () {
+                    button.setPressed(false);
+                });
+            }
+            this.addArcGISRestWindow.show();
+
+        } else if (this.addArcGISRestWindow) {
+            this.addArcGISRestWindow.close();
+        }
+    },
+
 <span id='CpsiMapview-controller-LayerTreeController-method-onBeforeDestroy'>    /**
 </span>    * Destroy any associated windows when this component gets destroyed
     */
@@ -415,6 +482,23 @@ Ext.define(&#39;CpsiMapview.controller.LayerTreeController&#39;, {
             this.addWmsWindow.destroy();
             this.addWmsWindow = null;
         }
+        if (this.addArcGISRestWindow) {
+            this.addArcGISRestWindow.destroy();
+            this.addArcGISRestWindow = null;
+        }
+    },
+
+<span id='CpsiMapview-controller-LayerTreeController-method-updateExpandedItemChildNodesUI'>    /**
+</span>    * Updates the UI of childNodes of an expanded item
+    * @param {CpsiMapview.data.model.LayerTreeNode} LayerTreeNode
+    */
+    updateExpandedItemChildNodesUI: function (layerTreeNode) {
+        Ext.each(layerTreeNode.childNodes, function (node) {
+            var layer =  node.getOlLayer();
+            if (layer.get(&#39;isWms&#39;) || layer.get(&#39;isWfs&#39;) || layer.get(&#39;isVt&#39;)) {
+                CpsiMapview.util.Layer.updateLayerNodeUI(layer, false);
+            }
+        });
     }
 });
 </pre>

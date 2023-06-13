@@ -28,6 +28,7 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
     requires: [
         &#39;Ext.panel.Panel&#39;,
         &#39;CpsiMapview.view.window.MinimizableWindow&#39;,
+        &#39;CpsiMapview.util.WmsFilter&#39;,
         &#39;BasiGX.view.grid.FeaturePropertyGrid&#39;,
         &#39;BasiGX.util.Map&#39;
     ],
@@ -38,15 +39,30 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
      */
     highlightSource: null,
 
+<span id='CpsiMapview-plugin-FeatureInfoWindow-method-percentageHeight'>    /**
+</span>     * Feature Window height as a percentage of the viewport
+     * @param {number} percentage as deciaml
+     */
+    percentageHeight: 0.8,
+
+<span id='CpsiMapview-plugin-FeatureInfoWindow-method-onBeforeRequest'>    /**
+</span>     * @method
+     *
+     * Template function called before doing the GetFeatureInfo request
+     * Return false if you don&#39;t want to make the GetFeatureInfo request.
+     *
+     * @param {Object} layer
+     */
+    onBeforeRequest: Ext.emptyFn,
+
 <span id='CpsiMapview-plugin-FeatureInfoWindow-method-init'>    init: function () {
 </span>        var me = this;
+        var cmp = me.getCmp();
 
-        var mapComp = me.getCmp();
-        var mapPanel = mapComp.up(&#39;cmv_map&#39;);
-        var map = mapComp.getMap();
+        me.map = cmp.map ? cmp.map : BasiGX.util.Map.getMapComponent().map;
 
-        mapPanel.on(&#39;cmv-mapclick&#39;, function (clickedFeatures, evt) {
-            if (map.get(&#39;defaultClickEnabled&#39;)) {
+        cmp.on(&#39;cmv-mapclick&#39;, function (clickedFeatures, evt) {
+            if (me.map.get(&#39;defaultClickEnabled&#39;)) {
                 me.requestFeatureInfos(clickedFeatures, evt);
             }
         });
@@ -60,18 +76,60 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
     requestFeatureInfos: function (clickedFeatures, evt) {
         var me = this;
 
-        var mapComp = me.getCmp();
-        var map = mapComp.getMap();
-
         var layers = [];
-        var resolution = map.getView().getResolution();
-        var projection = map.getView().getProjection();
+        var mapView = me.map.getView();
+
+        var resolution = mapView.getResolution();
+        var projection = mapView.getProjection();
         var format = new ol.format.GeoJSON();
 
-        this.highlightClick(evt);
+        me.highlightClick(evt);
 
-        map.forEachLayerAtPixel(evt.pixel, function (layer) {
-            layers.push(layer);
+        me.map.forEachLayerAtPixel(evt.pixel, function (layer) {
+            var params = layer.getSource().getParams();
+
+            // Map layers combining multiple WMS layers e.g. roads,rivers
+            // will cause errors in the back-end MapServer as the JSON properties
+            // will be different for different layers
+            // Split the layers and create temporary layers for the GetFeatureInfo requests
+
+            // we only check for unique layer names - if labels are used then duplicate layer names
+            // are used in requests, but we only want one set of FeatureInfo results
+            var layerNames = Ext.Array.unique(params.LAYERS.split(&#39;,&#39;));
+
+            if (layerNames.length &gt; 1) {
+
+                // if there are multiple layers then attempt to also split out styles and filters
+                var idx = 0;
+                var styleNames = [];
+
+                if (params.STYLES) {
+                    styleNames = params.STYLES.split(&#39;,&#39;);
+                }
+
+                var wmsFilterUtil = CpsiMapview.util.WmsFilter;
+                var filters = wmsFilterUtil.getWmsFilters(params);
+
+                Ext.Array.each(layerNames, function (layerName) {
+
+                    var newParams = Ext.clone(params);
+                    newParams.LAYERS = layerName;
+                    newParams.STYLES = styleNames[idx] ? styleNames[idx] : &#39;&#39;;
+                    newParams.FILTER = filters[idx] ? filters[idx] : &#39;&#39;;
+
+                    var wmsLayer = new ol.layer.Image({
+                        name: layerName,
+                        source: new ol.source.ImageWMS({
+                            url: layer.getSource().getUrl(),
+                            params: newParams
+                        })
+                    });
+                    layers.push(wmsLayer);
+                    idx += 1;
+                });
+            } else {
+                layers.push(layer);
+            }
         }, {
             layerFilter: function (layer) {
                 return layer.get(&#39;featureInfoWindow&#39;);
@@ -79,6 +137,16 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
         });
 
         var win = me.openFeatureInfoWindow();
+
+        if (!layers.length) {
+            // If no layers are enabled close the window so the close event
+            // is fired and the highlight is removed from the map
+            win.close();
+            // fire event so client can show custom ui, pass through the instance so
+            // that the window might be re-opened and custom content inserted
+            Ext.GlobalEvents.fireEvent(&#39;cmv-featureinfowindow-no-layers-enabled&#39;, me);
+            return;
+        }
 
         if (layers.length &lt;= 1) {
             win.getLayout().setConfig({
@@ -90,26 +158,70 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
             });
         }
 
-        if (layers.length === 0) {
-            win.add(Ext.create(&#39;Ext.panel.Panel&#39;, {
-                title: &#39;No results found&#39;
-            }));
-        } else {
-            layers.forEach(function (layer) {
-                var url = layer.getSource().getFeatureInfoUrl(evt.coordinate, resolution, projection, {
-                    INFO_FORMAT: &#39;geojson&#39;
-                });
+        var requests = [];
+        var hasContent = false;
+        layers.forEach(function (layer) {
 
-                Ext.Ajax.request({
-                    url: url
-                }).then(function (response) {
-                    var features = format.readFeatures(response.responseText);
-                    win.add(me.createFeaturePanels(layer, features));
-                }).then(undefined, function (error) {
-                    Ext.log.error(error);
-                });
+            var infoFormat = &#39;geojson&#39;;
+            var url = layer.getSource().getFeatureInfoUrl(evt.coordinate, resolution, projection, {
+                INFO_FORMAT: infoFormat
             });
-        }
+
+            // call the template function onBeforeRequest to
+            // see if this layer should be queried
+            if (Ext.isFunction(me.onBeforeRequest)) {
+                var ret = me.onBeforeRequest(layer);
+                if (ret === false) {
+                    // skip to next layer
+                    return;
+                }
+            }
+
+            var promise = Ext.Ajax.request({
+                url: url
+            }).then(function (response) {
+                var responseType = response.responseType ? response.responseType :
+                    response.getResponseHeader ? response.getResponseHeader(&#39;content-type&#39;) : null;
+
+                // check if the response is geojson as expected, if not then the server
+                // may have returned an error as XML
+                if (responseType.toLowerCase().indexOf(infoFormat) !== -1) {
+                    var features = format.readFeatures(response.responseText);
+                    if (features.length) {
+                        // at least one layer has features found
+                        hasContent = true;
+                        // ensure window is show, it may not be if
+                        // showFeatureInfoWindowOnlyIfContent is true
+                        // calling show multiple times is no issue
+                        win.show();
+                        win.add(me.createFeaturePanels(layer, features));
+                    }
+                } else {
+                    //&lt;debug&gt;
+                    Ext.log.warn(response.responseText);
+                    //&lt;/debug&gt;
+                }
+            }).then(undefined, function (error) {
+                Ext.log.error(error);
+            });
+
+            requests.push(promise);
+        });
+
+        // When all requests have been performed, and no features are found
+        // for any layer, close the window so that the highlight is removed from the map
+        // Also handles the case where the window was previously open because features were found
+        // But a new click has found no features, so the window is auto closed
+        // This second case behaviour could be changed by checking for win.getHidden()
+        Ext.Promise.all(requests).then(function () {
+            if (!hasContent) {
+                win.close();
+                // fire event so client can show custom ui, pass through the instance so
+                // that the window might be re-opened and custom content inserted
+                Ext.GlobalEvents.fireEvent(&#39;cmv-featureinfowindow-no-features-found&#39;, me);
+            }
+        });
+
     },
 
 <span id='CpsiMapview-plugin-FeatureInfoWindow-method-highlightClick'>    /**
@@ -117,8 +229,8 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
      * @param {ol.MapBrowserEvent} evt
      */
     highlightClick: function (evt) {
+
         var me = this;
-        var map = me.getCmp().getMap();
 
         if (!this.highlightSource) {
             this.highlightSource = new ol.source.Vector();
@@ -133,7 +245,7 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
                         })
                     })
                 }),
-                map: map
+                map: me.map
             });
         } else {
             this.highlightSource.clear();
@@ -152,7 +264,7 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
 
         // set the initial height of the window to 80% of the viewport height
         // a user is then free to resize as they wish
-        var height = Ext.getBody().getViewSize().height * 0.8;
+        var height = Ext.getBody().getViewSize().height * me.percentageHeight;
 
         if (this.window) {
             this.window.removeAll(true);
@@ -175,7 +287,7 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
             });
         }
 
-        this.window.show();
+        //this.window.show();
 
         return this.window;
     },
@@ -186,7 +298,7 @@ Ext.define(&#39;CpsiMapview.plugin.FeatureInfoWindow&#39;, {
      * @param {ol.Feature[]} features
      * @returns {BasiGX.view.grid.FeaturePropertyGrid[]}
      */
-    createFeaturePanels: function ( layer, features) {
+    createFeaturePanels: function (layer, features) {
         return features.map(function (feature) {
             return Ext.create(&#39;BasiGX.view.grid.FeaturePropertyGrid&#39;, {
                 title: layer.get(&#39;name&#39;),
