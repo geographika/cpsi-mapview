@@ -882,6 +882,14 @@ Ext.define(&#39;CpsiMapview.controller.grid.Grid&#39;, {
 
                     column.filter.setValue(filterValue);
                     break;
+                case &#39;boolean&#39;:
+                    // only equal is supported for boolean
+                    if (operator !== &#39;=&#39;) {
+                        Ext.log.warn(&#39;No valid operator provided.&#39;);
+                        return;
+                    }
+                    column.filter.setValue(value);
+                    break;
                 case &#39;list&#39;:
                     // we need to apply the initial config again,
                     // because otherwise the store with the list-choices
@@ -893,7 +901,7 @@ Ext.define(&#39;CpsiMapview.controller.grid.Grid&#39;, {
                         return;
                     }
 
-                    // now we apply the oparator and the value
+                    // now we apply the operator and the value
                     newFilter.operator = operator;
                     newFilter.value = value;
 
@@ -901,6 +909,7 @@ Ext.define(&#39;CpsiMapview.controller.grid.Grid&#39;, {
                     plugin.addFilter(newFilter);
                     break;
                 default:
+                    Ext.log.warn(&#39;Filters not implemented for columns of type &#39; + columnType);
                     break;
             }
         });
