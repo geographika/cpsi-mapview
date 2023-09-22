@@ -2,14 +2,83 @@
     <NamedLayer>
         <se:Name>waterbodies</se:Name>
         <UserStyle>
-            <se:Name>Waterbodies</se:Name>
-            <se:IsDefault>true</se:IsDefault>
+            <se:Name>Type</se:Name>
             <se:FeatureTypeStyle>
                 <se:Rule>
-                    <se:Name>Waterbodies</se:Name>
+                    <se:Name>Dock</se:Name>
+                    <ogc:Filter>
+                        <ogc:PropertyIsEqualTo>
+                            <ogc:PropertyName>fclass</ogc:PropertyName>
+                            <ogc:Literal>dock</ogc:Literal>
+                        </ogc:PropertyIsEqualTo>
+                    </ogc:Filter>
                     <se:PolygonSymbolizer>
                         <se:Fill>
-                            <se:SvgParameter name="fill">#365f83</se:SvgParameter>
+                            <se:SvgParameter name="fill">#f7fbff</se:SvgParameter>
+                        </se:Fill>
+                    </se:PolygonSymbolizer>
+                </se:Rule>
+                <se:Rule>
+                    <se:Name>Reservoir</se:Name>
+                    <ogc:Filter>
+                        <ogc:PropertyIsEqualTo>
+                            <ogc:PropertyName>fclass</ogc:PropertyName>
+                            <ogc:Literal>reservoir</ogc:Literal>
+                        </ogc:PropertyIsEqualTo>
+                    </ogc:Filter>
+                    <se:PolygonSymbolizer>
+                        <se:Fill>
+                            <se:SvgParameter name="fill">#d1e3f3</se:SvgParameter>
+                        </se:Fill>
+                    </se:PolygonSymbolizer>
+                </se:Rule>
+                <se:Rule>
+                    <se:Name>River</se:Name>
+                    <ogc:Filter>
+                        <ogc:PropertyIsEqualTo>
+                            <ogc:PropertyName>fclass</ogc:PropertyName>
+                            <ogc:Literal>river</ogc:Literal>
+                        </ogc:PropertyIsEqualTo>
+                    </ogc:Filter>
+                    <se:PolygonSymbolizer>
+                        <se:Fill>
+                            <se:SvgParameter name="fill">#9ac8e1</se:SvgParameter>
+                        </se:Fill>
+                    </se:PolygonSymbolizer>
+                </se:Rule>
+                <se:Rule>
+                    <se:Name>Water</se:Name>
+                    <ogc:Filter>
+                        <ogc:PropertyIsEqualTo>
+                            <ogc:PropertyName>fclass</ogc:PropertyName>
+                            <ogc:Literal>water</ogc:Literal>
+                        </ogc:PropertyIsEqualTo>
+                    </ogc:Filter>
+                    <se:PolygonSymbolizer>
+                        <se:Fill>
+                            <se:SvgParameter name="fill">#529dcc</se:SvgParameter>
+                        </se:Fill>
+                    </se:PolygonSymbolizer>
+                </se:Rule>
+                <se:Rule>
+                    <se:Name>Wetland</se:Name>
+                    <ogc:Filter>
+                        <ogc:PropertyIsEqualTo>
+                            <ogc:PropertyName>fclass</ogc:PropertyName>
+                            <ogc:Literal>wetland</ogc:Literal>
+                        </ogc:PropertyIsEqualTo>
+                    </ogc:Filter>
+                    <se:PolygonSymbolizer>
+                        <se:Fill>
+                            <se:SvgParameter name="fill">#1c6cb1</se:SvgParameter>
+                        </se:Fill>
+                    </se:PolygonSymbolizer>
+                </se:Rule>
+                <se:Rule>
+                    <se:Name>Other</se:Name>
+                    <se:PolygonSymbolizer>
+                        <se:Fill>
+                            <se:SvgParameter name="fill">#08306b</se:SvgParameter>
                         </se:Fill>
                     </se:PolygonSymbolizer>
                 </se:Rule>
