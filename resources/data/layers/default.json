@@ -336,11 +336,10 @@
       "layerType": "wfs",
       "layerKey": "NODES_WFS",
       "featureType": "nodes",
-      "useBbox":  false,
       "noCluster": true,
       "idProperty": "NodeId",
       "openLayers": {
-        "visibility": true,
+        "visibility": false,
         "maxScale": 800000
       }
     },
