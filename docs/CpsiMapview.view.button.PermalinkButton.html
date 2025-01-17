@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: view/button/FeatureSelectionButton.js</title>
+    <title>JSDoc: Class: PermalinkButton</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,102 +17,391 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: view/button/FeatureSelectionButton.js</h1>
+    <h1 class="page-title">Class: PermalinkButton</h1>
 
     
 
 
 
+
+<section>
+
+<header>
     
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>/**
- * This class represents a button, which is mainly used within a feature grid
- * (CpsiMapview.view.grid.Grid) and allows the user to select features on the
- * map by clicking when the button is pressed.
- * For selection the ID of the clicked feature is detected and forwarded to the
- * owner grid and its underlying WFS store.
- *
- * @class CpsiMapview.view.button.FeatureSelectionButton
- */
-Ext.define('CpsiMapview.view.button.FeatureSelectionButton', {
-    extend: 'Ext.button.Button',
-    xtype: 'cmv_feature_selection_button',
+        <h2><span class="attribs"><span class="type-signature"></span></span>PermalinkButton<span class="signature">()</span><span class="type-signature"></span></h2>
+        
+    
+</header>
 
-    requires: [
-        'CpsiMapview.controller.button.FeatureSelectionButtonController'
-    ],
+<article>
+    <div class="container-overview">
+    
+        
 
-    statics: {
-    },
+    
 
-    config: {
-        /**
-         * The layerKey property of the layer to query
-         */
-        vectorLayerKey: null
-    },
+    
+    <h4 class="name" id="PermalinkButton"><span class="type-signature"></span>new PermalinkButton<span class="signature">()</span><span class="type-signature"></span></h4>
+    
 
-    viewModel: {
-        data: {
-            text: 'Select',
-            tooltip: 'Select features on the map by click.',
-            addToSelectionLabel: 'Add to Selection',
-            newSelectionLabel: 'New Selection'
-        }
-    },
-
-    /**
-     * The controller for this class
-     */
-    controller: 'cmv_feature_selection_btn',
-
-    /**
-     * The name to be used e.g. in ComponentQueries
-     */
-    name: 'featureSelectionBtn',
-
-    /**
-     * The layer to query
-     */
-    queryLayer: null,
-
-    /**
-     * Flag steering if a message is showm if no features are selected
-     */
-    showNoSelectionMessage: true,
-
-    /**
-     * Enable toggle
-     */
-    enableToggle: true,
-
-    /**
-     * Register the listeners and redirect them
-     * to their corresponding controller methods
-     */
-    listeners: {
-        toggle: 'onBtnToggle',
-    },
-
-    bind: {
-        text: '{text}',
-        tooltip: '{tooltip}'
-    },
+    
 
 
-    /**
-     * Initializes this component
-     */
-    initComponent: function () {
-        var me = this;
-        me.callParent();
-    }
 
-});
-</code></pre>
-        </article>
-    </section>
+<div class="description">
+    This class is a button to open a prompt allowing
+permalinks to entered and zoomed to, without reloading the application
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="view_button_PermalinkButton.js.html">view/button/PermalinkButton.js</a>, <a href="view_button_PermalinkButton.js.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".controller"><span class="type-signature">(static) </span>controller<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    The controller for this class
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="view_button_PermalinkButton.js.html">view/button/PermalinkButton.js</a>, <a href="view_button_PermalinkButton.js.html#line24">line 24</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".iconCls"><span class="type-signature">(static) </span>iconCls<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    The icon the button should use
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="view_button_PermalinkButton.js.html">view/button/PermalinkButton.js</a>, <a href="view_button_PermalinkButton.js.html#line19">line 19</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".listeners"><span class="type-signature">(static) </span>listeners<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    Register the listeners and redirect them
+to their corresponding controller methods
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="view_button_PermalinkButton.js.html">view/button/PermalinkButton.js</a>, <a href="view_button_PermalinkButton.js.html#line42">line 42</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".name"><span class="type-signature">(static) </span>name<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    The name to be used e.g. in ComponentQueries
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="view_button_PermalinkButton.js.html">view/button/PermalinkButton.js</a>, <a href="view_button_PermalinkButton.js.html#line29">line 29</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
 
 
 
