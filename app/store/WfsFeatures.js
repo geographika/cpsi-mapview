@@ -29,5 +29,28 @@ Ext.define('CpsiMapview.store.WfsFeatures', {
     outputFormat: 'geojson',
     startIndex: 0,
     count: 20,
-    format: new ol.format.GeoJSON()
+    format: new ol.format.GeoJSON(),
+    /**
+     * Additional parameters to send with every WFS request
+     *
+     * @cfg {Object}
+     */
+    extraParams: null,
+
+    /**
+     * Extend the WFS parameters built by GeoExt.data.store.WfsFeatures with any
+     * #extraParams configured on this store.
+     * @private
+     * @return {Object} The WFS parameters
+     */
+    createParameters: function () {
+        const me = this;
+        const params = me.callParent(arguments);
+
+        if (me.extraParams) {
+            Ext.apply(params, me.extraParams);
+        }
+
+        return params;
+    }
 });
