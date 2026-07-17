@@ -31,10 +31,10 @@ Ext.define('CpsiMapview.store.WfsFeatures', {
     count: 20,
     format: new ol.format.GeoJSON(),
     /**
-    * Additional parameters to send with every WFS request
-    *
-    * @cfg {Object}
-    */
+     * Additional parameters to send with every WFS request
+     *
+     * @cfg {Object}
+     */
     extraParams: null,
 
     /**
@@ -44,8 +44,8 @@ Ext.define('CpsiMapview.store.WfsFeatures', {
      * @return {Object} The WFS parameters
      */
     createParameters: function () {
-        var me = this;
-        var params = me.callParent(arguments);
+        const me = this;
+        const params = me.callParent(arguments);
 
         if (me.extraParams) {
             Ext.apply(params, me.extraParams);
