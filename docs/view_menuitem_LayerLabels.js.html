@@ -30,14 +30,20 @@
  * MenuItem showing a checkbox in the layer context menu that allows
  * a separate label layer to be displayed alongside the feature layer.
  *
+ * Also supports a `labels` config array, similar to `styles`:
+ *
+ *     "labels": [
+ *         { "name": "LabelsName", "title": "Names" },
+ *         { "name": "LabelsCode", "title": "Codes" }
+ *     ]
+ *
+ * This configuration creates a submenu with a radio-style choice.
  * @class CpsiMapview.view.menuitem.LayerLabels
  */
 Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
     extend: 'Ext.menu.CheckItem',
     xtype: 'cmv_menuitem_layerlabels',
-    requires: [
-        'CpsiMapview.util.WmsFilter'
-    ],
+    requires: ['CpsiMapview.util.WmsFilter'],
 
     /**
      * The connected layer for this item.
@@ -52,11 +58,18 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
     text: 'Labels',
 
     /**
-     * The style name for the labels layer.
+     * The style name for the labels layer. Used for the single labels.
      * @property {String}
      * @readonly
      */
     labelClassName: null,
+
+    /**
+     * Configured label style options read from the layer's `labels` config array.
+     * @property {Object[]}
+     * @readonly
+     */
+    labelOptions: null,
 
     /**
      * Switch if the style should be applied
@@ -70,25 +83,47 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      * @private
      */
     initComponent: function () {
-        var me = this;
+        const me = this;
         if (me.layer &amp;&amp; !(me.layer instanceof ol.layer.Group)) {
-            me.clientSideStyle = (
-                me.layer.getSource() instanceof ol.source.VectorTile
-                || me.layer.getSource() instanceof ol.source.Vector
-            );
-            // try to detect the 'labelClassName' property of a WMS layer
-            if (me.layer.getSource() instanceof ol.source.TileWMS ||
-                me.layer.getSource() instanceof ol.source.ImageWMS) {
-                me.labelClassName = me.layer.get('labelClassName');
+            me.clientSideStyle =
+                me.layer.getSource() instanceof ol.source.VectorTile ||
+                me.layer.getSource() instanceof ol.source.Vector;
+
+            // try to detect the label configuration of a WMS layer
+            if (
+                me.layer.getSource() instanceof ol.source.TileWMS ||
+                me.layer.getSource() instanceof ol.source.ImageWMS
+            ) {
+                const labelsCfg = me.layer.get('labels');
+                if (Ext.isArray(labelsCfg) &amp;&amp; labelsCfg.length > 0) {
+                    me.labelOptions = labelsCfg;
+                    if (labelsCfg.length === 1) {
+                        // a single configured option behaves like the
+                        // single label menu item
+                        me.labelClassName = labelsCfg[0].name;
+                    }
+                } else {
+                    me.labelClassName = me.layer.get('labelClassName');
+                }
             }
         }
+
+        // build the submenu
+        if (
+            !me.clientSideStyle &amp;&amp;
+            Ext.isArray(me.labelOptions) &amp;&amp;
+            me.labelOptions.length > 1
+        ) {
+            me.menu = me.buildLabelOptionsMenuCfg();
+        }
+
         me.callParent();
 
         if (me.clientSideStyle) {
             // for vector layers display the labels feature if
             // at least one style has a labelRule
-            var hideLabelsCheckbox = true;
-            var styles = me.layer.get('styles');
+            let hideLabelsCheckbox = true;
+            const styles = me.layer.get('styles');
             if (Ext.isEmpty(styles) === false) {
                 Ext.Array.each(styles, function (style) {
                     if (style.labelRule) {
@@ -99,11 +134,94 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
             }
             me.setHidden(hideLabelsCheckbox);
         } else {
-            me.setHidden(Ext.isEmpty(me.labelClassName));
+            const hasLabelOptions =
+                Ext.isArray(me.labelOptions) &amp;&amp; me.labelOptions.length > 0;
+            me.setHidden(Ext.isEmpty(me.labelClassName) &amp;&amp; !hasLabelOptions);
         }
 
         me.on('afterrender', me.onAfterrender);
         me.on('checkchange', me.onCheckChange);
+    },
+
+    /**
+     * Builds the config for the submenu of selectable label styles
+     * ("None" + one radio-button for each label option).
+     *
+     * @return {Object} Config object for an Ext.menu.Menu
+     * @private
+     */
+    buildLabelOptionsMenuCfg: function () {
+        const me = this;
+        // the group name only needs to be unique within this submenu instance
+        const groupName = 'cmv-labels-group-' + Ext.id();
+
+        const items = [
+            {
+                xtype: 'menucheckitem',
+                text: 'None',
+                group: groupName,
+                labelName: null,
+                checked: true,
+                checkHandler: me.onLabelOptionCheckChange,
+                scope: me
+            }
+        ];
+
+        Ext.Array.each(me.labelOptions, function (labelCfg) {
+            items.push({
+                xtype: 'menucheckitem',
+                text: labelCfg.title || labelCfg.name,
+                group: groupName,
+                labelName: labelCfg.name,
+                checked: false,
+                checkHandler: me.onLabelOptionCheckChange,
+                scope: me
+            });
+        });
+
+        return {
+            xtype: 'menu',
+            items: items
+        };
+    },
+
+    /**
+     * Handles the 'checkchange' event of a submenu radio button.
+     *
+     * @param  {Ext.menu.CheckItem} checkItem The submenu item itself
+     * @param  {Boolean}            checked   Current checked state
+     * @private
+     */
+    onLabelOptionCheckChange: function (checkItem, checked) {
+        const me = this;
+        if (!checked) {
+            return;
+        }
+        const labelName = checkItem.labelName;
+        me.addStyleParameters(!!labelName, labelName);
+        // update checked property without re-triggering onCheckChange
+        const suppressEvents = true;
+        me.setChecked(!!labelName, suppressEvents);
+    },
+
+    /**
+     * Keeps the submenu's radio items in sync with the active
+     * label name (e.g. after the parent checkbox is toggled directly,
+     * or after detecting the initial state on render).
+     *
+     * @param  {String} activeLabelName Currently active label name, or
+     *                                  null if none is active
+     * @private
+     */
+    syncLabelOptionsMenu: function (activeLabelName) {
+        const me = this;
+        if (!me.menu) {
+            return;
+        }
+        me.menu.items.each(function (item) {
+            const suppressEvents = true;
+            item.setChecked(item.labelName === activeLabelName, suppressEvents);
+        });
     },
 
     /**
@@ -113,7 +231,7 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      * @param  {Ext.menu.CheckItem} checkItem The menu item itself
      */
     onAfterrender: function (checkItem) {
-        var me = this;
+        const me = this;
         if (me.clientSideStyle) {
             me.onAfterrenderClientSide(checkItem);
         } else {
@@ -129,11 +247,11 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      * @param  {Ext.menu.CheckItem} checkItem The menu item itself
      */
     onAfterrenderClientSide: function (checkItem) {
-        var me = this;
-        var activatedStyle = me.layer.get('activatedStyle');
+        const me = this;
+        const activatedStyle = me.layer.get('activatedStyle');
 
-        var styles = me.layer.get('styles');
-        var selectedStyle = styles.find(function (style) {
+        const styles = me.layer.get('styles');
+        const selectedStyle = styles.find(function (style) {
             return style.name === activatedStyle;
         });
 
@@ -147,23 +265,47 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
     /**
      * Handles the 'afterrender' event of this menu item for server
      * side labeling.
-     * Checks / unchecks box dependent on if labels are displayed.
+     * Checks / unchecks box dependent on if labels are displayed, and
+     * (when multiple label options are configured) syncs the submenu
+     * to whichever configured label style is currently active.
      *
      * @param  {Ext.menu.CheckItem} checkItem The menu item itself
      */
     onAfterrenderServerSide: function (checkItem) {
-        var me = this;
+        const me = this;
+        const wmsSource = me.layer.getSource();
+        const wmsParams = wmsSource.getParams();
+
+        // set the checkbox value, but no need to call onCheckChange again
+        const suppressEvents = true;
+
+        if (Ext.isArray(me.labelOptions) &amp;&amp; me.labelOptions.length > 1) {
+            let activeLabelName = null;
+            if (wmsParams &amp;&amp; !Ext.isEmpty(wmsParams.STYLES)) {
+                const activeEntry = Ext.Array.findBy(
+                    me.labelOptions,
+                    function (labelCfg) {
+                        return wmsParams.STYLES.indexOf(labelCfg.name) !== -1;
+                    }
+                );
+                activeLabelName = activeEntry ? activeEntry.name : null;
+            }
+            me.layer.set('activeLabelName', activeLabelName);
+            me.layer.set('labelsActive', !!activeLabelName);
+            checkItem.setChecked(!!activeLabelName, suppressEvents);
+            me.syncLabelOptionsMenu(activeLabelName);
+            return;
+        }
+
         if (Ext.isEmpty(me.labelClassName)) {
             return;
         }
-        var wmsSource = me.layer.getSource();
-        var wmsParams = wmsSource.getParams();
 
-        // set the checkbox value, but no need to call onCheckChange again
-        var suppressEvents = true;
-
-        if (wmsParams &amp;&amp; !Ext.isEmpty(wmsParams.STYLES) &amp;&amp;
-            wmsParams.STYLES.indexOf(me.labelClassName) !== -1) {
+        if (
+            wmsParams &amp;&amp;
+            !Ext.isEmpty(wmsParams.STYLES) &amp;&amp;
+            wmsParams.STYLES.indexOf(me.labelClassName) !== -1
+        ) {
             checkItem.setChecked(true, suppressEvents);
         } else {
             checkItem.setChecked(false, suppressEvents);
@@ -177,9 +319,18 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      * @param  {Boolean}            checked   Current checked state
      */
     onCheckChange: function (checkItem, checked) {
-        var me = this;
+        const me = this;
         if (me.clientSideStyle) {
             me.addLabelStyle(checked);
+        } else if (Ext.isArray(me.labelOptions) &amp;&amp; me.labelOptions.length > 1) {
+            // the top-level menu was toggled directly
+            // turning it off means "None"; turning it on
+            // uses the previously active option or the first configured option
+            const labelName = checked
+                ? me.layer.get('activeLabelName') || me.labelOptions[0].name
+                : null;
+            me.addStyleParameters(checked, labelName);
+            me.syncLabelOptionsMenu(labelName);
         } else {
             me.addStyleParameters(checked);
         }
@@ -192,10 +343,10 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      * @param  {Boolean} addLabel Add or remove the label layer
      */
     addLabelStyle: function (addLabel) {
-        var me = this;
-        var layer = me.layer;
+        const me = this;
+        const layer = me.layer;
 
-        var originalValue = layer.get('labelsActive');
+        const originalValue = layer.get('labelsActive');
 
         // reload the SLD if the label values are changed
         if (originalValue !== addLabel) {
@@ -209,52 +360,59 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      * WMS LAYERS param with custom style.
      *
      * @param  {Boolean} addLabel Add or remove the label layer
+     * @param  {String}  [labelClassNameOverride] Label style name
+     *                   to use instead of `me.labelClassName`. Used when
+     *                   multiple `labels` options are configured.
      */
-    addStyleParameters: function (addLabel) {
-        var me = this;
-        var layer = me.layer;
-        var labelClassName = me.labelClassName;
-        var wmsSource = layer.getSource();
-        var wmsParams = wmsSource.getParams();
-        var layers = wmsParams.LAYERS || [];
-        var styles = wmsParams.STYLES || '';
-        var layerList = Ext.isArray(layers) ? layers : layers.split(',');
-        var stylesList = Ext.isArray(styles) ? styles : styles.split(',');
+    addStyleParameters: function (addLabel, labelClassNameOverride) {
+        const me = this;
+        const layer = me.layer;
+        const labelClassName = labelClassNameOverride || me.labelClassName;
+        const wmsSource = layer.getSource();
+        const wmsParams = wmsSource.getParams();
+        const layers = wmsParams.LAYERS || [];
+        const styles = wmsParams.STYLES || '';
+        let layerList = Ext.isArray(layers) ? layers : layers.split(',');
+        const stylesList = Ext.isArray(styles) ? styles : styles.split(',');
 
-        if (addLabel) {
-            if (layerList.length === 1) {
-                // add a duplicate of the layer
-                layerList.push(layerList[0]);
-                // apply the label style on the duplicated layer
-                stylesList.push(labelClassName);
-
-                // mark layer that labels are active
-                layer.set('labelsActive', true);
-            }
-        } else {
-            // remove any duplicate layer names created by adding labels
+        // if a label style is currently active, remove it first
+        if (layer.get('labelsActive')) {
+            const previousLabelClassName =
+                layer.get('activeLabelName') || me.labelClassName;
             layerList = Ext.Array.unique(layerList);
-            // remove any label styles
-            Ext.Array.remove(stylesList, labelClassName);
+            Ext.Array.remove(stylesList, previousLabelClassName);
+        }
 
+        if (addLabel &amp;&amp; labelClassName) {
+            // add a duplicate of the layer
+            layerList.push(layerList[0]);
+            // apply the label style on the duplicated layer
+            stylesList.push(labelClassName);
+
+            // mark layer that labels are active, and which style is used
+            layer.set('labelsActive', true);
+            layer.set('activeLabelName', labelClassName);
+        } else {
             // mark layer that labels are inactive
             layer.set('labelsActive', false);
+            layer.set('activeLabelName', null);
         }
 
         wmsSource.getParams().LAYERS = layerList.join(',');
 
         // once the LAYERS parameter has been updated
         // ensure there is a filter for every layer listed in the WMS request (required by MapServer)
-        var wmsFilterUtil = CpsiMapview.util.WmsFilter;
-        var wmsFilterString = wmsFilterUtil.getWmsFilterString(wmsSource.getParams());
+        const wmsFilterUtil = CpsiMapview.util.WmsFilter;
+        const wmsFilterString = wmsFilterUtil.getWmsFilterString(
+            wmsSource.getParams()
+        );
 
-        var newParams = {
+        const newParams = {
             FILTER: wmsFilterString,
             STYLES: stylesList.join(',')
         };
 
         wmsSource.updateParams(newParams);
-
     }
 });
 </code></pre>
@@ -267,17 +425,17 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CpsiMapview.controller.LayerTreeController.html">LayerTreeController</a></li><li><a href="CpsiMapview.controller.button.TracingMixin.html">TracingMixin</a></li><li><a href="CpsiMapview.controller.form.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.controller.form.Login.html">Login</a></li><li><a href="CpsiMapview.controller.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.data.model.LayerTreeNode.html">LayerTreeNode</a></li><li><a href="CpsiMapview.factory.Layer.html">Layer</a></li><li><a href="CpsiMapview.form.ControllerMixin.html">ControllerMixin</a></li><li><a href="CpsiMapview.form.HelpMixin.html">HelpMixin</a></li><li><a href="CpsiMapview.form.LayersMixin.html">LayersMixin</a></li><li><a href="CpsiMapview.form.RightInfoField.html">RightInfoField</a></li><li><a href="CpsiMapview.form.ValidationMessagesMixin.html">ValidationMessagesMixin</a></li><li><a href="CpsiMapview.form.ViewMixin.html">ViewMixin</a></li><li><a href="CpsiMapview.form.ViewModelMixin.html">ViewModelMixin</a></li><li><a href="CpsiMapview.form.field.Combo.html">Combo</a></li><li><a href="CpsiMapview.form.field.ComboLegacy.html">ComboLegacy</a></li><li><a href="CpsiMapview.model.fileupload.Attachment.html">Attachment</a></li><li><a href="CpsiMapview.plugin.ExpandPanel.html">ExpandPanel</a></li><li><a href="CpsiMapview.plugin.FeatureAttributeGrouping.html">FeatureAttributeGrouping</a></li><li><a href="CpsiMapview.plugin.TreeColumnContextMenu.html">TreeColumnContextMenu</a></li><li><a href="CpsiMapview.store.WfsFeatures.html">WfsFeatures</a></li><li><a href="CpsiMapview.util.ColumnMenuOrderMixin.html">ColumnMenuOrderMixin</a></li><li><a href="CpsiMapview.util.EditWindowOpenerMixin.html">EditWindowOpenerMixin</a></li><li><a href="CpsiMapview.util.Layer.html">Layer</a></li><li><a href="CpsiMapview.util.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.util.Legend.html">Legend</a></li><li><a href="CpsiMapview.util.RoleManager.html">RoleManager</a></li><li><a href="CpsiMapview.util.Style.html">Style</a></li><li><a href="CpsiMapview.util.SwitchLayer.html">SwitchLayer</a></li><li><a href="CpsiMapview.util.Tracing.html">Tracing</a></li><li><a href="CpsiMapview.util.Turf.html">Turf</a></li><li><a href="CpsiMapview.util.WmsFilter.html">WmsFilter</a></li><li><a href="CpsiMapview.util.ZoomerMixin.html">ZoomerMixin</a></li><li><a href="CpsiMapview.view.button.DigitizeButton.html">DigitizeButton</a></li><li><a href="CpsiMapview.view.button.DrawingButton.html">DrawingButton</a></li><li><a href="CpsiMapview.view.button.FeatureSelectionButton.html">FeatureSelectionButton</a></li><li><a href="CpsiMapview.view.button.HelpButton.html">HelpButton</a></li><li><a href="CpsiMapview.view.button.LoginButton.html">LoginButton</a></li><li><a href="CpsiMapview.view.button.MinimizeAllButton.html">MinimizeAllButton</a></li><li><a href="CpsiMapview.view.button.PermalinkButton.html">PermalinkButton</a></li><li><a href="CpsiMapview.view.button.SpatialQueryButton.html">SpatialQueryButton</a></li><li><a href="CpsiMapview.view.button.SplitByClickButton.html">SplitByClickButton</a></li><li><a href="CpsiMapview.view.button.StreetViewTool.html">StreetViewTool</a></li><li><a href="CpsiMapview.view.fileupload.FileGrid.html">FileGrid</a></li><li><a href="CpsiMapview.view.fileupload.FileGridController.html">FileGridController</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindow.html">FileUploadWindow</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindowController.html">FileUploadWindowController</a></li><li><a href="CpsiMapview.view.fileupload.Report.html">Report</a></li><li><a href="CpsiMapview.view.from.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.view.grid.ItemDeleter.html">ItemDeleter</a></li><li><a href="CpsiMapview.view.menuitem.LayerFilterReset.html">LayerFilterReset</a></li><li><a href="CpsiMapview.view.menuitem.LayerGrid.html">LayerGrid</a></li><li><a href="CpsiMapview.view.menuitem.LayerHelp.html">LayerHelp</a></li><li><a href="CpsiMapview.view.menuitem.LayerLabels.html">LayerLabels</a></li><li><a href="CpsiMapview.view.menuitem.LayerMetadata.html">LayerMetadata</a></li><li><a href="CpsiMapview.view.menuitem.LayerOpacity.html">LayerOpacity</a></li><li><a href="CpsiMapview.view.menuitem.LayerRefresh.html">LayerRefresh</a></li><li><a href="CpsiMapview.view.menuitem.LayerStyleSwitcher.html">LayerStyleSwitcher</a></li><li><a href="CpsiMapview.view.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.view.toolbar.CircleSelectionToolbar.html">CircleSelectionToolbar</a></li><li><a href="CpsiMapview.view.toolbar.MinimizedWindows.html">MinimizedWindows</a></li><li><a href="CpsiMapview.view.toolbar.ParallelLineToolbar.html">ParallelLineToolbar</a></li><li><a href="CpsiMapview.view.window.MinimizableWindow.html">MinimizableWindow</a></li><li><a href="CpsiMapview.view.window.ParallelLineWindow.html">ParallelLineWindow</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:cmv-init-layersaddedFireswhenallinitiallayersfromtheconfighavebeencreatedandaddedtotheOLmap.">cmv-init-layersadded
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CpsiMapview.controller.LayerTreeController.html">LayerTreeController</a></li><li><a href="CpsiMapview.controller.button.SnappingMixin.html">SnappingMixin</a></li><li><a href="CpsiMapview.controller.button.TracingMixin.html">TracingMixin</a></li><li><a href="CpsiMapview.controller.form.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.controller.form.Login.html">Login</a></li><li><a href="CpsiMapview.controller.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.data.model.LayerTreeNode.html">LayerTreeNode</a></li><li><a href="CpsiMapview.factory.Layer.html">Layer</a></li><li><a href="CpsiMapview.form.ControllerMixin.html">ControllerMixin</a></li><li><a href="CpsiMapview.form.HelpMixin.html">HelpMixin</a></li><li><a href="CpsiMapview.form.LayersMixin.html">LayersMixin</a></li><li><a href="CpsiMapview.form.RightInfoField.html">RightInfoField</a></li><li><a href="CpsiMapview.form.ValidationMessagesMixin.html">ValidationMessagesMixin</a></li><li><a href="CpsiMapview.form.ViewMixin.html">ViewMixin</a></li><li><a href="CpsiMapview.form.ViewModelMixin.html">ViewModelMixin</a></li><li><a href="CpsiMapview.form.field.Combo.html">Combo</a></li><li><a href="CpsiMapview.form.field.ComboLegacy.html">ComboLegacy</a></li><li><a href="CpsiMapview.model.fileupload.Attachment.html">Attachment</a></li><li><a href="CpsiMapview.plugin.ExpandPanel.html">ExpandPanel</a></li><li><a href="CpsiMapview.plugin.FeatureAttributeGrouping.html">FeatureAttributeGrouping</a></li><li><a href="CpsiMapview.plugin.TreeColumnContextMenu.html">TreeColumnContextMenu</a></li><li><a href="CpsiMapview.store.WfsFeatures.html">WfsFeatures</a></li><li><a href="CpsiMapview.util.ColumnMenuOrderMixin.html">ColumnMenuOrderMixin</a></li><li><a href="CpsiMapview.util.EditWindowOpenerMixin.html">EditWindowOpenerMixin</a></li><li><a href="CpsiMapview.util.Layer.html">Layer</a></li><li><a href="CpsiMapview.util.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.util.Legend.html">Legend</a></li><li><a href="CpsiMapview.util.RoleManager.html">RoleManager</a></li><li><a href="CpsiMapview.util.Style.html">Style</a></li><li><a href="CpsiMapview.util.SwitchLayer.html">SwitchLayer</a></li><li><a href="CpsiMapview.util.Tracing.html">Tracing</a></li><li><a href="CpsiMapview.util.Turf.html">Turf</a></li><li><a href="CpsiMapview.util.WmsFilter.html">WmsFilter</a></li><li><a href="CpsiMapview.util.ZoomerMixin.html">ZoomerMixin</a></li><li><a href="CpsiMapview.view.button.DigitizeButton.html">DigitizeButton</a></li><li><a href="CpsiMapview.view.button.DrawingButton.html">DrawingButton</a></li><li><a href="CpsiMapview.view.button.FeatureSelectionButton.html">FeatureSelectionButton</a></li><li><a href="CpsiMapview.view.button.HelpButton.html">HelpButton</a></li><li><a href="CpsiMapview.view.button.LoginButton.html">LoginButton</a></li><li><a href="CpsiMapview.view.button.MinimizeAllButton.html">MinimizeAllButton</a></li><li><a href="CpsiMapview.view.button.PermalinkButton.html">PermalinkButton</a></li><li><a href="CpsiMapview.view.button.SpatialQueryButton.html">SpatialQueryButton</a></li><li><a href="CpsiMapview.view.button.SplitByClickButton.html">SplitByClickButton</a></li><li><a href="CpsiMapview.view.button.StreetViewTool.html">StreetViewTool</a></li><li><a href="CpsiMapview.view.fileupload.FileGrid.html">FileGrid</a></li><li><a href="CpsiMapview.view.fileupload.FileGridController.html">FileGridController</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindow.html">FileUploadWindow</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindowController.html">FileUploadWindowController</a></li><li><a href="CpsiMapview.view.fileupload.Report.html">Report</a></li><li><a href="CpsiMapview.view.from.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.view.grid.ItemDeleter.html">ItemDeleter</a></li><li><a href="CpsiMapview.view.menuitem.LayerFilterReset.html">LayerFilterReset</a></li><li><a href="CpsiMapview.view.menuitem.LayerGrid.html">LayerGrid</a></li><li><a href="CpsiMapview.view.menuitem.LayerHelp.html">LayerHelp</a></li><li><a href="CpsiMapview.view.menuitem.LayerLabels.html">LayerLabels</a></li><li><a href="CpsiMapview.view.menuitem.LayerMetadata.html">LayerMetadata</a></li><li><a href="CpsiMapview.view.menuitem.LayerOpacity.html">LayerOpacity</a></li><li><a href="CpsiMapview.view.menuitem.LayerRefresh.html">LayerRefresh</a></li><li><a href="CpsiMapview.view.menuitem.LayerStyleSwitcher.html">LayerStyleSwitcher</a></li><li><a href="CpsiMapview.view.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.view.toolbar.CircleSelectionToolbar.html">CircleSelectionToolbar</a></li><li><a href="CpsiMapview.view.toolbar.MinimizedWindows.html">MinimizedWindows</a></li><li><a href="CpsiMapview.view.toolbar.ParallelLineToolbar.html">ParallelLineToolbar</a></li><li><a href="CpsiMapview.view.window.MinimizableWindow.html">MinimizableWindow</a></li><li><a href="CpsiMapview.view.window.ParallelLineWindow.html">ParallelLineWindow</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:cmv-init-layersaddedFireswhenallinitiallayersfromtheconfighavebeencreatedandaddedtotheOLmap.">cmv-init-layersadded
 Fires when all initial layers from the config have been created and added to the OL map.</a></li><li><a href="global.html#event:cmv-mapclickFireswhentheOLmapisclicked.">cmv-mapclick
 Fires when the OL map is clicked.</a></li><li><a href="global.html#event:parallelLineCreatedFires,whenanewparallellinewascreated.">parallelLineCreated
 Fires, when a new parallel line was created.</a></li></ul><h3>Global</h3><ul><li><a href="global.html#TemplatefunctioncalledbeforedoingtheGetFeatureInforequestReturnfalseifyoudon'twanttomaketheGetFeatureInforequest.">Template function called before doing the GetFeatureInfo request
-Return false if you don't want to make the GetFeatureInfo request.</a></li><li><a href="global.html#beforeSave">beforeSave</a></li><li><a href="global.html#getErrors">getErrors</a></li><li><a href="global.html#onAfterSaveSucceded">onAfterSaveSucceded</a></li><li><a href="global.html#onChange">onChange</a></li><li><a href="global.html#onFocus">onFocus</a></li><li><a href="global.html#onGroupEditToggle">onGroupEditToggle</a></li><li><a href="global.html#rawToValue">rawToValue</a></li><li><a href="global.html#setValue">setValue</a></li><li><a href="global.html#storeConfig">storeConfig</a></li><li><a href="global.html#validate">validate</a></li></ul>
+Return false if you don't want to make the GetFeatureInfo request.</a></li><li><a href="global.html#beforeSave">beforeSave</a></li><li><a href="global.html#onAfterSaveSucceded">onAfterSaveSucceded</a></li><li><a href="global.html#onGroupEditToggle">onGroupEditToggle</a></li><li><a href="global.html#setValue">setValue</a></li><li><a href="global.html#storeConfig">storeConfig</a></li><li><a href="global.html#validate">validate</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Jan 17 2025 15:05:53 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Aug 17 2026 12:23:53 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>

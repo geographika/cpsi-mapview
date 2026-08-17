@@ -45,20 +45,22 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
      *     for
      * @private
      */
-    init: function(column) {
-        var me = this;
+    init: function (column) {
+        const me = this;
         if (!(column instanceof Ext.grid.column.Column)) {
-            Ext.log.warn('Plugin shall only be applied to instances of' +
-                  ' Ext.grid.column.Column');
+            Ext.log.warn(
+                'Plugin shall only be applied to instances of' +
+                    ' Ext.grid.column.Column'
+            );
             return;
         }
-        var mapComponent = BasiGX.util.Map.getMapComponent();
+        const mapComponent = BasiGX.util.Map.getMapComponent();
         mapComponent.getStore().setChangeLayerFilterFn(me.changeLayerFilterFn);
 
-        var map = mapComponent.getMap();
-        var mapView = map.getView();
+        const map = mapComponent.getMap();
+        const mapView = map.getView();
 
-        mapView.on('change:resolution', function() {
+        mapView.on('change:resolution', function () {
             me.updateTreeNode(mapView);
         });
 
@@ -79,7 +81,7 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
      * @private
      */
     changeLayerFilterFn: function (record) {
-        var layer = this;
+        const layer = this;
         return layer.id === record.getOlLayer().id;
     },
 
@@ -88,23 +90,28 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
      * @param {ol.View} mapView The OL map view
      */
     updateTreeNode: function (mapView) {
-        var me = this;
-        var unit = mapView.getProjection().getUnits();
-        var resolution = mapView.getResolution();
-        var treepanel = me.cmp.up('treepanel');
-        var nodeStore = treepanel.getStore();
-        var treeNodes = nodeStore.getData();
+        const me = this;
+        const unit = mapView.getProjection().getUnits();
+        const resolution = mapView.getResolution();
+        const treepanel = me.cmp.up('treepanel');
+        const nodeStore = treepanel.getStore();
+        const treeNodes = nodeStore.getData();
         Ext.each(treeNodes.items, function (node) {
-            var inRange = me.layerInResolutionRange(node.getOlLayer(), resolution);
+            const inRange = me.layerInResolutionRange(
+                node.getOlLayer(),
+                resolution
+            );
             node[inRange ? 'removeCls' : 'addCls']('cpsi-tree-node-disabled');
-            var descriptionBefore = node.getOlLayer().get('description');
-            var description = me.getTooltipText(node, inRange, unit);
-            var changed = description !== descriptionBefore;
-            var layer = node.getOlLayer();
+            const descriptionBefore = node.getOlLayer().get('description');
+            const description = me.getTooltipText(node, inRange, unit);
+            const changed = description !== descriptionBefore;
+            const layer = node.getOlLayer();
             if (layer) {
                 layer.set('description', description);
             } else {
-                Ext.log.warn('No layer associated with the tree node ' + node.get('text'));
+                Ext.log.warn(
+                    'No layer associated with the tree node ' + node.get('text')
+                );
             }
 
             if (changed) {
@@ -129,10 +136,10 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
             // false, since we cannot sanely determine a correct answer.
             return false;
         }
-        var layerMinRes = layer.getMinResolution(); // default: 0 if unset
-        var layerMaxRes = layer.getMaxResolution(); // default: Infinity if unset
+        const layerMinRes = layer.getMinResolution(); // default: 0 if unset
+        const layerMaxRes = layer.getMaxResolution(); // default: Infinity if unset
         // minimum resolution is inclusive, maximum resolution exclusive
-        var within = currentRes >= layerMinRes &amp;&amp; currentRes &lt; layerMaxRes;
+        const within = currentRes >= layerMinRes &amp;&amp; currentRes &lt; layerMaxRes;
         return within;
     },
 
@@ -146,7 +153,7 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
      * @returns {String} The toolip text valid for current range
      */
     getTooltipText: function (node, inRange, unit) {
-        var staticMe = CpsiMapview.plugin.TreeColumnInResolutionRange;
+        const staticMe = CpsiMapview.plugin.TreeColumnInResolutionRange;
         if (!Ext.isDefined(node.originalQtip)) {
             node.originalQtip = node.getOlLayer().get('description') || '';
         }
@@ -155,13 +162,16 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
             return node.originalQtip.length > 0 ? node.originalQtip : undefined;
         }
 
-        var currentTip = node.getOlLayer().get('description');
-        if (currentTip &amp;&amp; (currentTip.indexOf(staticMe.LINE_BREAK) > -1 ||
-            currentTip.indexOf('Visible') > -1)) {
+        const currentTip = node.getOlLayer().get('description');
+        if (
+            currentTip &amp;&amp;
+            (currentTip.indexOf(staticMe.LINE_BREAK) > -1 ||
+                currentTip.indexOf('Visible') > -1)
+        ) {
             return currentTip;
         }
 
-        var description = this.enhanceTooltip(node.getOlLayer(), unit);
+        const description = this.enhanceTooltip(node.getOlLayer(), unit);
         return description;
     },
 
@@ -173,10 +183,18 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
      * @returns {String} The enhanced toolip text
      */
     enhanceTooltip: function (layer, unit) {
-        var staticMe = CpsiMapview.plugin.TreeColumnInResolutionRange;
-        var scale = '', maxScale, minScale;
-        maxScale = BasiGX.util.Map.getScaleForResolution(layer.getMaxResolution(), unit);
-        minScale = BasiGX.util.Map.getScaleForResolution(layer.getMinResolution(), unit);
+        const staticMe = CpsiMapview.plugin.TreeColumnInResolutionRange;
+        let scale = '',
+            maxScale,
+            minScale;
+        maxScale = BasiGX.util.Map.getScaleForResolution(
+            layer.getMaxResolution(),
+            unit
+        );
+        minScale = BasiGX.util.Map.getScaleForResolution(
+            layer.getMinResolution(),
+            unit
+        );
         if (maxScale) {
             // round to nearest 10
             maxScale = Math.round(maxScale / 10) * 10;
@@ -189,20 +207,29 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
         }
 
         if (maxScale &amp;&amp; minScale) {
-            scale = Ext.String.format('Visible between &lt;b>1:{0}&lt;/b> and &lt;b>1:{1}&lt;/b>', minScale, maxScale);
+            scale = Ext.String.format(
+                'Visible between &lt;b>1:{0}&lt;/b> and &lt;b>1:{1}&lt;/b>',
+                minScale,
+                maxScale
+            );
         } else {
             if (maxScale) {
-                scale = Ext.String.format('Visible at &lt;b>1:{0}&lt;/b> and above', maxScale);
+                scale = Ext.String.format(
+                    'Visible at &lt;b>1:{0}&lt;/b> and above',
+                    maxScale
+                );
             }
             if (minScale) {
-                scale = Ext.String.format('Visible at &lt;b>1:{0}&lt;b> and below', minScale);
+                scale = Ext.String.format(
+                    'Visible at &lt;b>1:{0}&lt;b> and below',
+                    minScale
+                );
             }
         }
-        return layer.get('description') ?
-            (layer.get('description').trim() + staticMe.LINE_BREAK + scale) :
-            scale;
+        return layer.get('description')
+            ? layer.get('description').trim() + staticMe.LINE_BREAK + scale
+            : scale;
     }
-
 });
 </code></pre>
         </article>
@@ -214,17 +241,17 @@ Ext.define('CpsiMapview.plugin.TreeColumnInResolutionRange', {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CpsiMapview.controller.LayerTreeController.html">LayerTreeController</a></li><li><a href="CpsiMapview.controller.button.TracingMixin.html">TracingMixin</a></li><li><a href="CpsiMapview.controller.form.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.controller.form.Login.html">Login</a></li><li><a href="CpsiMapview.controller.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.data.model.LayerTreeNode.html">LayerTreeNode</a></li><li><a href="CpsiMapview.factory.Layer.html">Layer</a></li><li><a href="CpsiMapview.form.ControllerMixin.html">ControllerMixin</a></li><li><a href="CpsiMapview.form.HelpMixin.html">HelpMixin</a></li><li><a href="CpsiMapview.form.LayersMixin.html">LayersMixin</a></li><li><a href="CpsiMapview.form.RightInfoField.html">RightInfoField</a></li><li><a href="CpsiMapview.form.ValidationMessagesMixin.html">ValidationMessagesMixin</a></li><li><a href="CpsiMapview.form.ViewMixin.html">ViewMixin</a></li><li><a href="CpsiMapview.form.ViewModelMixin.html">ViewModelMixin</a></li><li><a href="CpsiMapview.form.field.Combo.html">Combo</a></li><li><a href="CpsiMapview.form.field.ComboLegacy.html">ComboLegacy</a></li><li><a href="CpsiMapview.model.fileupload.Attachment.html">Attachment</a></li><li><a href="CpsiMapview.plugin.ExpandPanel.html">ExpandPanel</a></li><li><a href="CpsiMapview.plugin.FeatureAttributeGrouping.html">FeatureAttributeGrouping</a></li><li><a href="CpsiMapview.plugin.TreeColumnContextMenu.html">TreeColumnContextMenu</a></li><li><a href="CpsiMapview.store.WfsFeatures.html">WfsFeatures</a></li><li><a href="CpsiMapview.util.ColumnMenuOrderMixin.html">ColumnMenuOrderMixin</a></li><li><a href="CpsiMapview.util.EditWindowOpenerMixin.html">EditWindowOpenerMixin</a></li><li><a href="CpsiMapview.util.Layer.html">Layer</a></li><li><a href="CpsiMapview.util.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.util.Legend.html">Legend</a></li><li><a href="CpsiMapview.util.RoleManager.html">RoleManager</a></li><li><a href="CpsiMapview.util.Style.html">Style</a></li><li><a href="CpsiMapview.util.SwitchLayer.html">SwitchLayer</a></li><li><a href="CpsiMapview.util.Tracing.html">Tracing</a></li><li><a href="CpsiMapview.util.Turf.html">Turf</a></li><li><a href="CpsiMapview.util.WmsFilter.html">WmsFilter</a></li><li><a href="CpsiMapview.util.ZoomerMixin.html">ZoomerMixin</a></li><li><a href="CpsiMapview.view.button.DigitizeButton.html">DigitizeButton</a></li><li><a href="CpsiMapview.view.button.DrawingButton.html">DrawingButton</a></li><li><a href="CpsiMapview.view.button.FeatureSelectionButton.html">FeatureSelectionButton</a></li><li><a href="CpsiMapview.view.button.HelpButton.html">HelpButton</a></li><li><a href="CpsiMapview.view.button.LoginButton.html">LoginButton</a></li><li><a href="CpsiMapview.view.button.MinimizeAllButton.html">MinimizeAllButton</a></li><li><a href="CpsiMapview.view.button.PermalinkButton.html">PermalinkButton</a></li><li><a href="CpsiMapview.view.button.SpatialQueryButton.html">SpatialQueryButton</a></li><li><a href="CpsiMapview.view.button.SplitByClickButton.html">SplitByClickButton</a></li><li><a href="CpsiMapview.view.button.StreetViewTool.html">StreetViewTool</a></li><li><a href="CpsiMapview.view.fileupload.FileGrid.html">FileGrid</a></li><li><a href="CpsiMapview.view.fileupload.FileGridController.html">FileGridController</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindow.html">FileUploadWindow</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindowController.html">FileUploadWindowController</a></li><li><a href="CpsiMapview.view.fileupload.Report.html">Report</a></li><li><a href="CpsiMapview.view.from.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.view.grid.ItemDeleter.html">ItemDeleter</a></li><li><a href="CpsiMapview.view.menuitem.LayerFilterReset.html">LayerFilterReset</a></li><li><a href="CpsiMapview.view.menuitem.LayerGrid.html">LayerGrid</a></li><li><a href="CpsiMapview.view.menuitem.LayerHelp.html">LayerHelp</a></li><li><a href="CpsiMapview.view.menuitem.LayerLabels.html">LayerLabels</a></li><li><a href="CpsiMapview.view.menuitem.LayerMetadata.html">LayerMetadata</a></li><li><a href="CpsiMapview.view.menuitem.LayerOpacity.html">LayerOpacity</a></li><li><a href="CpsiMapview.view.menuitem.LayerRefresh.html">LayerRefresh</a></li><li><a href="CpsiMapview.view.menuitem.LayerStyleSwitcher.html">LayerStyleSwitcher</a></li><li><a href="CpsiMapview.view.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.view.toolbar.CircleSelectionToolbar.html">CircleSelectionToolbar</a></li><li><a href="CpsiMapview.view.toolbar.MinimizedWindows.html">MinimizedWindows</a></li><li><a href="CpsiMapview.view.toolbar.ParallelLineToolbar.html">ParallelLineToolbar</a></li><li><a href="CpsiMapview.view.window.MinimizableWindow.html">MinimizableWindow</a></li><li><a href="CpsiMapview.view.window.ParallelLineWindow.html">ParallelLineWindow</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:cmv-init-layersaddedFireswhenallinitiallayersfromtheconfighavebeencreatedandaddedtotheOLmap.">cmv-init-layersadded
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CpsiMapview.controller.LayerTreeController.html">LayerTreeController</a></li><li><a href="CpsiMapview.controller.button.SnappingMixin.html">SnappingMixin</a></li><li><a href="CpsiMapview.controller.button.TracingMixin.html">TracingMixin</a></li><li><a href="CpsiMapview.controller.form.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.controller.form.Login.html">Login</a></li><li><a href="CpsiMapview.controller.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.data.model.LayerTreeNode.html">LayerTreeNode</a></li><li><a href="CpsiMapview.factory.Layer.html">Layer</a></li><li><a href="CpsiMapview.form.ControllerMixin.html">ControllerMixin</a></li><li><a href="CpsiMapview.form.HelpMixin.html">HelpMixin</a></li><li><a href="CpsiMapview.form.LayersMixin.html">LayersMixin</a></li><li><a href="CpsiMapview.form.RightInfoField.html">RightInfoField</a></li><li><a href="CpsiMapview.form.ValidationMessagesMixin.html">ValidationMessagesMixin</a></li><li><a href="CpsiMapview.form.ViewMixin.html">ViewMixin</a></li><li><a href="CpsiMapview.form.ViewModelMixin.html">ViewModelMixin</a></li><li><a href="CpsiMapview.form.field.Combo.html">Combo</a></li><li><a href="CpsiMapview.form.field.ComboLegacy.html">ComboLegacy</a></li><li><a href="CpsiMapview.model.fileupload.Attachment.html">Attachment</a></li><li><a href="CpsiMapview.plugin.ExpandPanel.html">ExpandPanel</a></li><li><a href="CpsiMapview.plugin.FeatureAttributeGrouping.html">FeatureAttributeGrouping</a></li><li><a href="CpsiMapview.plugin.TreeColumnContextMenu.html">TreeColumnContextMenu</a></li><li><a href="CpsiMapview.store.WfsFeatures.html">WfsFeatures</a></li><li><a href="CpsiMapview.util.ColumnMenuOrderMixin.html">ColumnMenuOrderMixin</a></li><li><a href="CpsiMapview.util.EditWindowOpenerMixin.html">EditWindowOpenerMixin</a></li><li><a href="CpsiMapview.util.Layer.html">Layer</a></li><li><a href="CpsiMapview.util.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.util.Legend.html">Legend</a></li><li><a href="CpsiMapview.util.RoleManager.html">RoleManager</a></li><li><a href="CpsiMapview.util.Style.html">Style</a></li><li><a href="CpsiMapview.util.SwitchLayer.html">SwitchLayer</a></li><li><a href="CpsiMapview.util.Tracing.html">Tracing</a></li><li><a href="CpsiMapview.util.Turf.html">Turf</a></li><li><a href="CpsiMapview.util.WmsFilter.html">WmsFilter</a></li><li><a href="CpsiMapview.util.ZoomerMixin.html">ZoomerMixin</a></li><li><a href="CpsiMapview.view.button.DigitizeButton.html">DigitizeButton</a></li><li><a href="CpsiMapview.view.button.DrawingButton.html">DrawingButton</a></li><li><a href="CpsiMapview.view.button.FeatureSelectionButton.html">FeatureSelectionButton</a></li><li><a href="CpsiMapview.view.button.HelpButton.html">HelpButton</a></li><li><a href="CpsiMapview.view.button.LoginButton.html">LoginButton</a></li><li><a href="CpsiMapview.view.button.MinimizeAllButton.html">MinimizeAllButton</a></li><li><a href="CpsiMapview.view.button.PermalinkButton.html">PermalinkButton</a></li><li><a href="CpsiMapview.view.button.SpatialQueryButton.html">SpatialQueryButton</a></li><li><a href="CpsiMapview.view.button.SplitByClickButton.html">SplitByClickButton</a></li><li><a href="CpsiMapview.view.button.StreetViewTool.html">StreetViewTool</a></li><li><a href="CpsiMapview.view.fileupload.FileGrid.html">FileGrid</a></li><li><a href="CpsiMapview.view.fileupload.FileGridController.html">FileGridController</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindow.html">FileUploadWindow</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindowController.html">FileUploadWindowController</a></li><li><a href="CpsiMapview.view.fileupload.Report.html">Report</a></li><li><a href="CpsiMapview.view.from.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.view.grid.ItemDeleter.html">ItemDeleter</a></li><li><a href="CpsiMapview.view.menuitem.LayerFilterReset.html">LayerFilterReset</a></li><li><a href="CpsiMapview.view.menuitem.LayerGrid.html">LayerGrid</a></li><li><a href="CpsiMapview.view.menuitem.LayerHelp.html">LayerHelp</a></li><li><a href="CpsiMapview.view.menuitem.LayerLabels.html">LayerLabels</a></li><li><a href="CpsiMapview.view.menuitem.LayerMetadata.html">LayerMetadata</a></li><li><a href="CpsiMapview.view.menuitem.LayerOpacity.html">LayerOpacity</a></li><li><a href="CpsiMapview.view.menuitem.LayerRefresh.html">LayerRefresh</a></li><li><a href="CpsiMapview.view.menuitem.LayerStyleSwitcher.html">LayerStyleSwitcher</a></li><li><a href="CpsiMapview.view.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.view.toolbar.CircleSelectionToolbar.html">CircleSelectionToolbar</a></li><li><a href="CpsiMapview.view.toolbar.MinimizedWindows.html">MinimizedWindows</a></li><li><a href="CpsiMapview.view.toolbar.ParallelLineToolbar.html">ParallelLineToolbar</a></li><li><a href="CpsiMapview.view.window.MinimizableWindow.html">MinimizableWindow</a></li><li><a href="CpsiMapview.view.window.ParallelLineWindow.html">ParallelLineWindow</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:cmv-init-layersaddedFireswhenallinitiallayersfromtheconfighavebeencreatedandaddedtotheOLmap.">cmv-init-layersadded
 Fires when all initial layers from the config have been created and added to the OL map.</a></li><li><a href="global.html#event:cmv-mapclickFireswhentheOLmapisclicked.">cmv-mapclick
 Fires when the OL map is clicked.</a></li><li><a href="global.html#event:parallelLineCreatedFires,whenanewparallellinewascreated.">parallelLineCreated
 Fires, when a new parallel line was created.</a></li></ul><h3>Global</h3><ul><li><a href="global.html#TemplatefunctioncalledbeforedoingtheGetFeatureInforequestReturnfalseifyoudon'twanttomaketheGetFeatureInforequest.">Template function called before doing the GetFeatureInfo request
-Return false if you don't want to make the GetFeatureInfo request.</a></li><li><a href="global.html#beforeSave">beforeSave</a></li><li><a href="global.html#getErrors">getErrors</a></li><li><a href="global.html#onAfterSaveSucceded">onAfterSaveSucceded</a></li><li><a href="global.html#onChange">onChange</a></li><li><a href="global.html#onFocus">onFocus</a></li><li><a href="global.html#onGroupEditToggle">onGroupEditToggle</a></li><li><a href="global.html#rawToValue">rawToValue</a></li><li><a href="global.html#setValue">setValue</a></li><li><a href="global.html#storeConfig">storeConfig</a></li><li><a href="global.html#validate">validate</a></li></ul>
+Return false if you don't want to make the GetFeatureInfo request.</a></li><li><a href="global.html#beforeSave">beforeSave</a></li><li><a href="global.html#onAfterSaveSucceded">onAfterSaveSucceded</a></li><li><a href="global.html#onGroupEditToggle">onGroupEditToggle</a></li><li><a href="global.html#setValue">setValue</a></li><li><a href="global.html#storeConfig">storeConfig</a></li><li><a href="global.html#validate">validate</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Jan 17 2025 15:05:53 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Aug 17 2026 12:23:53 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>

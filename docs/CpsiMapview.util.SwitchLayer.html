@@ -215,6 +215,213 @@
     
 
     
+    <h4 class="name" id=".buildWmsStyleList"><span class="type-signature">(static) </span>buildWmsStyleList<span class="signature">(activatedStyle, labelsActive, activeLabelName)</span><span class="type-signature"> &rarr; {String}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Builds the WMS STYLES parameter value for a layer, appending the
+label style (if any)
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>activatedStyle</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The style name</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>labelsActive</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Whether a label style should be
+                                  appended</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>activeLabelName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The label style name to append</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line101">line 101</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    The combined STYLES parameter value
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">String</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id=".changeInternalLayer"><span class="type-signature">(static) </span>changeInternalLayer<span class="signature">(layerCollection, switchLayer, index)</span><span class="type-signature"></span></h4>
     
 
@@ -365,7 +572,7 @@ collection.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line78">line 78</a>
+        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line122">line 122</a>
     </li></ul></dd>
     
 
@@ -526,7 +733,7 @@ changes switch layers if necessary
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line37">line 37</a>
+        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line39">line 39</a>
     </li></ul></dd>
     
 
@@ -551,6 +758,169 @@ changes switch layers if necessary
 
 
 
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".getActiveLabelStyleName"><span class="type-signature">(static) </span>getActiveLabelStyleName<span class="signature">(layer)</span><span class="type-signature"> &rarr; {String|null}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Get the active WMS label style for a layer
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>layer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">ol.layer.Layer</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The layer to check</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line85">line 85</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    The active label style name, or null if
+                       none is configured
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">String</span>
+|
+
+<span class="param-type">null</span>
+
+
+    </dd>
+</dl>
+
+    
 
 
 
@@ -847,7 +1217,7 @@ and replaces them if required
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line190">line 190</a>
+        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line261">line 261</a>
     </li></ul></dd>
     
 
@@ -958,7 +1328,7 @@ necessary when switch layers get replaced.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line207">line 207</a>
+        <a href="util_SwitchLayer.js.html">util/SwitchLayer.js</a>, <a href="util_SwitchLayer.js.html#line285">line 285</a>
     </li></ul></dd>
     
 
@@ -1004,17 +1374,17 @@ necessary when switch layers get replaced.
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CpsiMapview.controller.LayerTreeController.html">LayerTreeController</a></li><li><a href="CpsiMapview.controller.button.TracingMixin.html">TracingMixin</a></li><li><a href="CpsiMapview.controller.form.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.controller.form.Login.html">Login</a></li><li><a href="CpsiMapview.controller.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.data.model.LayerTreeNode.html">LayerTreeNode</a></li><li><a href="CpsiMapview.factory.Layer.html">Layer</a></li><li><a href="CpsiMapview.form.ControllerMixin.html">ControllerMixin</a></li><li><a href="CpsiMapview.form.HelpMixin.html">HelpMixin</a></li><li><a href="CpsiMapview.form.LayersMixin.html">LayersMixin</a></li><li><a href="CpsiMapview.form.RightInfoField.html">RightInfoField</a></li><li><a href="CpsiMapview.form.ValidationMessagesMixin.html">ValidationMessagesMixin</a></li><li><a href="CpsiMapview.form.ViewMixin.html">ViewMixin</a></li><li><a href="CpsiMapview.form.ViewModelMixin.html">ViewModelMixin</a></li><li><a href="CpsiMapview.form.field.Combo.html">Combo</a></li><li><a href="CpsiMapview.form.field.ComboLegacy.html">ComboLegacy</a></li><li><a href="CpsiMapview.model.fileupload.Attachment.html">Attachment</a></li><li><a href="CpsiMapview.plugin.ExpandPanel.html">ExpandPanel</a></li><li><a href="CpsiMapview.plugin.FeatureAttributeGrouping.html">FeatureAttributeGrouping</a></li><li><a href="CpsiMapview.plugin.TreeColumnContextMenu.html">TreeColumnContextMenu</a></li><li><a href="CpsiMapview.store.WfsFeatures.html">WfsFeatures</a></li><li><a href="CpsiMapview.util.ColumnMenuOrderMixin.html">ColumnMenuOrderMixin</a></li><li><a href="CpsiMapview.util.EditWindowOpenerMixin.html">EditWindowOpenerMixin</a></li><li><a href="CpsiMapview.util.Layer.html">Layer</a></li><li><a href="CpsiMapview.util.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.util.Legend.html">Legend</a></li><li><a href="CpsiMapview.util.RoleManager.html">RoleManager</a></li><li><a href="CpsiMapview.util.Style.html">Style</a></li><li><a href="CpsiMapview.util.SwitchLayer.html">SwitchLayer</a></li><li><a href="CpsiMapview.util.Tracing.html">Tracing</a></li><li><a href="CpsiMapview.util.Turf.html">Turf</a></li><li><a href="CpsiMapview.util.WmsFilter.html">WmsFilter</a></li><li><a href="CpsiMapview.util.ZoomerMixin.html">ZoomerMixin</a></li><li><a href="CpsiMapview.view.button.DigitizeButton.html">DigitizeButton</a></li><li><a href="CpsiMapview.view.button.DrawingButton.html">DrawingButton</a></li><li><a href="CpsiMapview.view.button.FeatureSelectionButton.html">FeatureSelectionButton</a></li><li><a href="CpsiMapview.view.button.HelpButton.html">HelpButton</a></li><li><a href="CpsiMapview.view.button.LoginButton.html">LoginButton</a></li><li><a href="CpsiMapview.view.button.MinimizeAllButton.html">MinimizeAllButton</a></li><li><a href="CpsiMapview.view.button.PermalinkButton.html">PermalinkButton</a></li><li><a href="CpsiMapview.view.button.SpatialQueryButton.html">SpatialQueryButton</a></li><li><a href="CpsiMapview.view.button.SplitByClickButton.html">SplitByClickButton</a></li><li><a href="CpsiMapview.view.button.StreetViewTool.html">StreetViewTool</a></li><li><a href="CpsiMapview.view.fileupload.FileGrid.html">FileGrid</a></li><li><a href="CpsiMapview.view.fileupload.FileGridController.html">FileGridController</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindow.html">FileUploadWindow</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindowController.html">FileUploadWindowController</a></li><li><a href="CpsiMapview.view.fileupload.Report.html">Report</a></li><li><a href="CpsiMapview.view.from.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.view.grid.ItemDeleter.html">ItemDeleter</a></li><li><a href="CpsiMapview.view.menuitem.LayerFilterReset.html">LayerFilterReset</a></li><li><a href="CpsiMapview.view.menuitem.LayerGrid.html">LayerGrid</a></li><li><a href="CpsiMapview.view.menuitem.LayerHelp.html">LayerHelp</a></li><li><a href="CpsiMapview.view.menuitem.LayerLabels.html">LayerLabels</a></li><li><a href="CpsiMapview.view.menuitem.LayerMetadata.html">LayerMetadata</a></li><li><a href="CpsiMapview.view.menuitem.LayerOpacity.html">LayerOpacity</a></li><li><a href="CpsiMapview.view.menuitem.LayerRefresh.html">LayerRefresh</a></li><li><a href="CpsiMapview.view.menuitem.LayerStyleSwitcher.html">LayerStyleSwitcher</a></li><li><a href="CpsiMapview.view.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.view.toolbar.CircleSelectionToolbar.html">CircleSelectionToolbar</a></li><li><a href="CpsiMapview.view.toolbar.MinimizedWindows.html">MinimizedWindows</a></li><li><a href="CpsiMapview.view.toolbar.ParallelLineToolbar.html">ParallelLineToolbar</a></li><li><a href="CpsiMapview.view.window.MinimizableWindow.html">MinimizableWindow</a></li><li><a href="CpsiMapview.view.window.ParallelLineWindow.html">ParallelLineWindow</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:cmv-init-layersaddedFireswhenallinitiallayersfromtheconfighavebeencreatedandaddedtotheOLmap.">cmv-init-layersadded
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="CpsiMapview.controller.LayerTreeController.html">LayerTreeController</a></li><li><a href="CpsiMapview.controller.button.SnappingMixin.html">SnappingMixin</a></li><li><a href="CpsiMapview.controller.button.TracingMixin.html">TracingMixin</a></li><li><a href="CpsiMapview.controller.form.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.controller.form.Login.html">Login</a></li><li><a href="CpsiMapview.controller.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.data.model.LayerTreeNode.html">LayerTreeNode</a></li><li><a href="CpsiMapview.factory.Layer.html">Layer</a></li><li><a href="CpsiMapview.form.ControllerMixin.html">ControllerMixin</a></li><li><a href="CpsiMapview.form.HelpMixin.html">HelpMixin</a></li><li><a href="CpsiMapview.form.LayersMixin.html">LayersMixin</a></li><li><a href="CpsiMapview.form.RightInfoField.html">RightInfoField</a></li><li><a href="CpsiMapview.form.ValidationMessagesMixin.html">ValidationMessagesMixin</a></li><li><a href="CpsiMapview.form.ViewMixin.html">ViewMixin</a></li><li><a href="CpsiMapview.form.ViewModelMixin.html">ViewModelMixin</a></li><li><a href="CpsiMapview.form.field.Combo.html">Combo</a></li><li><a href="CpsiMapview.form.field.ComboLegacy.html">ComboLegacy</a></li><li><a href="CpsiMapview.model.fileupload.Attachment.html">Attachment</a></li><li><a href="CpsiMapview.plugin.ExpandPanel.html">ExpandPanel</a></li><li><a href="CpsiMapview.plugin.FeatureAttributeGrouping.html">FeatureAttributeGrouping</a></li><li><a href="CpsiMapview.plugin.TreeColumnContextMenu.html">TreeColumnContextMenu</a></li><li><a href="CpsiMapview.store.WfsFeatures.html">WfsFeatures</a></li><li><a href="CpsiMapview.util.ColumnMenuOrderMixin.html">ColumnMenuOrderMixin</a></li><li><a href="CpsiMapview.util.EditWindowOpenerMixin.html">EditWindowOpenerMixin</a></li><li><a href="CpsiMapview.util.Layer.html">Layer</a></li><li><a href="CpsiMapview.util.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.util.Legend.html">Legend</a></li><li><a href="CpsiMapview.util.RoleManager.html">RoleManager</a></li><li><a href="CpsiMapview.util.Style.html">Style</a></li><li><a href="CpsiMapview.util.SwitchLayer.html">SwitchLayer</a></li><li><a href="CpsiMapview.util.Tracing.html">Tracing</a></li><li><a href="CpsiMapview.util.Turf.html">Turf</a></li><li><a href="CpsiMapview.util.WmsFilter.html">WmsFilter</a></li><li><a href="CpsiMapview.util.ZoomerMixin.html">ZoomerMixin</a></li><li><a href="CpsiMapview.view.button.DigitizeButton.html">DigitizeButton</a></li><li><a href="CpsiMapview.view.button.DrawingButton.html">DrawingButton</a></li><li><a href="CpsiMapview.view.button.FeatureSelectionButton.html">FeatureSelectionButton</a></li><li><a href="CpsiMapview.view.button.HelpButton.html">HelpButton</a></li><li><a href="CpsiMapview.view.button.LoginButton.html">LoginButton</a></li><li><a href="CpsiMapview.view.button.MinimizeAllButton.html">MinimizeAllButton</a></li><li><a href="CpsiMapview.view.button.PermalinkButton.html">PermalinkButton</a></li><li><a href="CpsiMapview.view.button.SpatialQueryButton.html">SpatialQueryButton</a></li><li><a href="CpsiMapview.view.button.SplitByClickButton.html">SplitByClickButton</a></li><li><a href="CpsiMapview.view.button.StreetViewTool.html">StreetViewTool</a></li><li><a href="CpsiMapview.view.fileupload.FileGrid.html">FileGrid</a></li><li><a href="CpsiMapview.view.fileupload.FileGridController.html">FileGridController</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindow.html">FileUploadWindow</a></li><li><a href="CpsiMapview.view.fileupload.FileUploadWindowController.html">FileUploadWindowController</a></li><li><a href="CpsiMapview.view.fileupload.Report.html">Report</a></li><li><a href="CpsiMapview.view.from.LayerTreeFilter.html">LayerTreeFilter</a></li><li><a href="CpsiMapview.view.grid.ItemDeleter.html">ItemDeleter</a></li><li><a href="CpsiMapview.view.menuitem.LayerFilterReset.html">LayerFilterReset</a></li><li><a href="CpsiMapview.view.menuitem.LayerGrid.html">LayerGrid</a></li><li><a href="CpsiMapview.view.menuitem.LayerHelp.html">LayerHelp</a></li><li><a href="CpsiMapview.view.menuitem.LayerLabels.html">LayerLabels</a></li><li><a href="CpsiMapview.view.menuitem.LayerMetadata.html">LayerMetadata</a></li><li><a href="CpsiMapview.view.menuitem.LayerOpacity.html">LayerOpacity</a></li><li><a href="CpsiMapview.view.menuitem.LayerRefresh.html">LayerRefresh</a></li><li><a href="CpsiMapview.view.menuitem.LayerStyleSwitcher.html">LayerStyleSwitcher</a></li><li><a href="CpsiMapview.view.panel.NumericAttributeSlider.html">NumericAttributeSlider</a></li><li><a href="CpsiMapview.view.toolbar.CircleSelectionToolbar.html">CircleSelectionToolbar</a></li><li><a href="CpsiMapview.view.toolbar.MinimizedWindows.html">MinimizedWindows</a></li><li><a href="CpsiMapview.view.toolbar.ParallelLineToolbar.html">ParallelLineToolbar</a></li><li><a href="CpsiMapview.view.window.MinimizableWindow.html">MinimizableWindow</a></li><li><a href="CpsiMapview.view.window.ParallelLineWindow.html">ParallelLineWindow</a></li></ul><h3>Events</h3><ul><li><a href="global.html#event:cmv-init-layersaddedFireswhenallinitiallayersfromtheconfighavebeencreatedandaddedtotheOLmap.">cmv-init-layersadded
 Fires when all initial layers from the config have been created and added to the OL map.</a></li><li><a href="global.html#event:cmv-mapclickFireswhentheOLmapisclicked.">cmv-mapclick
 Fires when the OL map is clicked.</a></li><li><a href="global.html#event:parallelLineCreatedFires,whenanewparallellinewascreated.">parallelLineCreated
 Fires, when a new parallel line was created.</a></li></ul><h3>Global</h3><ul><li><a href="global.html#TemplatefunctioncalledbeforedoingtheGetFeatureInforequestReturnfalseifyoudon'twanttomaketheGetFeatureInforequest.">Template function called before doing the GetFeatureInfo request
-Return false if you don't want to make the GetFeatureInfo request.</a></li><li><a href="global.html#beforeSave">beforeSave</a></li><li><a href="global.html#getErrors">getErrors</a></li><li><a href="global.html#onAfterSaveSucceded">onAfterSaveSucceded</a></li><li><a href="global.html#onChange">onChange</a></li><li><a href="global.html#onFocus">onFocus</a></li><li><a href="global.html#onGroupEditToggle">onGroupEditToggle</a></li><li><a href="global.html#rawToValue">rawToValue</a></li><li><a href="global.html#setValue">setValue</a></li><li><a href="global.html#storeConfig">storeConfig</a></li><li><a href="global.html#validate">validate</a></li></ul>
+Return false if you don't want to make the GetFeatureInfo request.</a></li><li><a href="global.html#beforeSave">beforeSave</a></li><li><a href="global.html#onAfterSaveSucceded">onAfterSaveSucceded</a></li><li><a href="global.html#onGroupEditToggle">onGroupEditToggle</a></li><li><a href="global.html#setValue">setValue</a></li><li><a href="global.html#storeConfig">storeConfig</a></li><li><a href="global.html#validate">validate</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Fri Jan 17 2025 15:05:53 GMT+0000 (Coordinated Universal Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Mon Aug 17 2026 12:23:53 GMT+0000 (Coordinated Universal Time)
 </footer>
 
 <script> prettyPrint(); </script>
