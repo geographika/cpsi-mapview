@@ -220,6 +220,11 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      */
     onAfterrenderClientSide: function (checkItem) {
         const me = this;
+
+        if (!me.layer || me.layer instanceof ol.layer.Group) {
+            return;
+        }
+
         const activatedStyle = me.layer.get('activatedStyle');
 
         const styles = me.layer.get('styles');
