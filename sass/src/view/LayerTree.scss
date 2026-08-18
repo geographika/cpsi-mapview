@@ -19,6 +19,7 @@
     }
 
         .x-tree-checkbox:after {
+            content: "\f0b0";
             position: absolute;
             left: 100%; // immediately to the right of the checkbox box
             top: 50%;
