@@ -204,6 +204,11 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      */
     onAfterrender: function (checkItem) {
         const me = this;
+
+        if (!me.layer || me.layer instanceof ol.layer.Group) {
+            return;
+        }
+
         if (me.clientSideStyle) {
             me.onAfterrenderClientSide(checkItem);
         } else {
@@ -220,11 +225,6 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      */
     onAfterrenderClientSide: function (checkItem) {
         const me = this;
-
-        if (!me.layer || me.layer instanceof ol.layer.Group) {
-            return;
-        }
-
         const activatedStyle = me.layer.get('activatedStyle');
 
         const styles = me.layer.get('styles');
@@ -250,6 +250,12 @@ Ext.define('CpsiMapview.view.menuitem.LayerLabels', {
      */
     onAfterrenderServerSide: function (checkItem) {
         const me = this;
+
+        if (!me.layer.getSource || !me.layer.getSource().getParams) {
+            // not a WMS layer
+            return;
+        }
+
         const wmsSource = me.layer.getSource();
         const wmsParams = wmsSource.getParams();
 
